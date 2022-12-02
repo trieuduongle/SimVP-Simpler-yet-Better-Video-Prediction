@@ -190,7 +190,7 @@ class Exp:
 
         for index,pred in enumerate(preds[0]):
             output = np.squeeze(pred,axis = 0)
-            print(output.shape)
+            print(np.array(pred).shape)
             data = im.fromarray(np.squeeze(pred,0).transpose(1,2,0))
             data.save(os.path.join(folder_path,'pred_'+ index + '.png'))
 
