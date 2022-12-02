@@ -262,22 +262,22 @@ class DataProcess(object):
     if not os.path.exists(os.path.join(self.paths, 'train_data_gzip.hkl')):
       print('not exist')
       train_data, train_indices = self.load_data(self.paths, mode='train')
-      hkl.dump(train_data, self.paths+'train_data_gzip.hkl', mode='w',compression='gzip')
-      hkl.dump(train_indices, self.paths+'train_indices_gzip.hkl', mode='w', compression='gzip')
+      hkl.dump(train_data, os.path.join(self.paths, 'train_data_gzip.hkl'), mode='w',compression='gzip')
+      hkl.dump(train_indices, os.path.join(self.paths, 'train_indices_gzip.hkl'), mode='w', compression='gzip')
     else:
       print('exist')
-      train_data = hkl.load(self.paths+'train_data_gzip.hkl')
-      train_indices = hkl.load(self.paths+'train_indices_gzip.hkl')
+      train_data = hkl.load(os.path.join(self.paths, 'train_data_gzip.hkl'))
+      train_indices = hkl.load(os.path.join(self.paths, 'train_indices_gzip.hkl'))
     return InputHandle(train_data, train_indices, self.input_param)
 
   def get_test_input_handle(self):
-    if not os.path.exists(self.paths+'test_data_gzip.hkl'):
+    if not os.path.exists(os.path.join(self.paths, 'test_data_gzip.hkl')):
       test_data, test_indices = self.load_data(self.paths, mode='test')
-      hkl.dump(test_data, self.paths+'test_data_gzip.hkl', mode='w', compression='gzip')
-      hkl.dump(test_indices, self.paths+'test_indices_gzip.hkl', mode='w', compression='gzip')
+      hkl.dump(test_data, os.path.join(self.paths, 'test_data_gzip.hkl'), mode='w', compression='gzip')
+      hkl.dump(test_indices, os.path.join(self.paths, 'test_indices_gzip.hkl'), mode='w', compression='gzip')
     else:
-      test_data = hkl.load(self.paths+'test_data_gzip.hkl')
-      test_indices = hkl.load(self.paths+'test_indices_gzip.hkl')
+      test_data = hkl.load(os.path.join(self.paths, 'test_data_gzip.hkl'))
+      test_indices = hkl.load(os.path.join(self.paths, 'test_indices_gzip.hkl'))
     return InputHandle(test_data, test_indices, self.input_param)
 
 def load_data(batch_size, val_batch_size, data_root, num_workers=1, pre_seq_length=10, aft_seq_length=20, require_back=False):
