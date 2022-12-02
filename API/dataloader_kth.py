@@ -260,10 +260,12 @@ class DataProcess(object):
 
   def get_train_input_handle(self):
     if not os.path.exists(self.paths+'train_data_gzip.hkl'):
+      print('exist')
       train_data, train_indices = self.load_data(self.paths, mode='train')
       hkl.dump(train_data, self.paths+'train_data_gzip.hkl', mode='w',compression='gzip')
       hkl.dump(train_indices, self.paths+'train_indices_gzip.hkl', mode='w', compression='gzip')
     else:
+      print('not exist')
       train_data = hkl.load(self.paths+'train_data_gzip.hkl')
       train_indices = hkl.load(self.paths+'train_indices_gzip.hkl')
     return InputHandle(train_data, train_indices, self.input_param)

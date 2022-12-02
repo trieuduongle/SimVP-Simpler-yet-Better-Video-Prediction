@@ -172,6 +172,7 @@ class Exp:
             np.save(osp.join(folder_path, np_data + '.npy'), vars()[np_data])
         return mse
 
+    # TODO: Enhance it for passing fixed input image
     def interpolate(self):
         inputs_lst, trues_lst, preds_lst = [], [], []
         for batch_x, batch_y in self.test_loader:
