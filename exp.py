@@ -10,6 +10,7 @@ from model import SimVP
 from tqdm import tqdm
 from API import *
 from utils import *
+from PIL import Image as im
 
 
 class Exp:
@@ -170,3 +171,23 @@ class Exp:
         for np_data in ['inputs', 'trues', 'preds']:
             np.save(osp.join(folder_path, np_data + '.npy'), vars()[np_data])
         return mse
+
+    def interpolate(self):
+        inputs_lst, trues_lst, preds_lst = [], [], []
+        for batch_x, batch_y in self.test_loader:
+            pred_y = self.model(batch_x.to(self.device))
+            list(map(lambda data, lst: lst.append(data.detach().cpu().numpy()), [
+                 batch_x, batch_y, pred_y], [inputs_lst, trues_lst, preds_lst]))
+            break
+        
+        inputs, preds = map(lambda data: np.concatenate(
+            data, axis=0), [inputs_lst, preds_lst])
+        print(preds.shape)
+
+        folder_path = self.path+'/interpolation/preds/'
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+
+        for index,pred in enumerate(preds):
+            data = im.fromarray(pred)
+            data.save(os.path.join(folder_path, index + '.png'))
