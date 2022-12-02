@@ -293,7 +293,9 @@ def load_data(batch_size, val_batch_size, data_root, num_workers=1, pre_seq_leng
     }
     input_handle = DataProcess(input_param)
     train_input_handle = input_handle.get_train_input_handle()
+    print('loaded train_input_handle')
     test_input_handle = input_handle.get_test_input_handle()
+    print('loaded test_input_handle')
 
     train_set = KTHDataset( train_input_handle.datas,
                               train_input_handle.indices,
