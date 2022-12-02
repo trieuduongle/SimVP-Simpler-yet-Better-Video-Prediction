@@ -189,13 +189,14 @@ class Exp:
             os.makedirs(folder_path)
 
         for index,pred in enumerate(preds[0]):
-            data = im.fromarray(pred)
+            print(pred.shape)
+            data = im.fromarray(np.squeeze(pred,0))
             data.transpose(1,2,0)
             data.save(os.path.join(folder_path,'pred_'+ index + '.png'))
 
         
         for index,pred in enumerate(inputs[0]):
-            data = im.fromarray(pred)
+            data = im.fromarray(np.squeeze(pred,0))
             data.transpose(1,2,0)
             data.save(os.path.join(folder_path,'input_'+ index + '.png'))
 
