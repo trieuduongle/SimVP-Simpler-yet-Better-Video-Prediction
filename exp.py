@@ -190,12 +190,12 @@ class Exp:
 
         for index,pred in enumerate(preds[0]):
             print(np.array(pred).transpose(1,2,0).shape)
-            data = im.fromarray(np.squeeze(np.array(pred).transpose(1,2,0)).convert("L")
+            data = im.fromarray(np.squeeze(np.array(pred).transpose(1,2,0))).convert("L")
             data.save(os.path.join(folder_path,'pred_'+ str(index) + '.png'))
 
         
         for index,pred in enumerate(inputs[0]):
-            data = im.fromarray(np.squeeze(np.array(pred).transpose(1,2,0))).convert("L")
+            data = im.fromarray(np.squeeze(np.array(pred).transpose(1,2,0)))).convert("L")
             
             data.save(os.path.join(folder_path,'input_'+ str(index) + '.png'))
 
