@@ -189,8 +189,7 @@ class Exp:
             os.makedirs(folder_path)
 
         for index,pred in enumerate(preds[0]):
-            output = np.squeeze(pred,axis = 0)
-            print(pred.shape)
+            print(np.array(pred).transpose(1,2,0).shape)
             data = im.fromarray(np.array(pred).transpose(1,2,0))
             data.save(os.path.join(folder_path,'pred_'+ index + '.png'))
 
