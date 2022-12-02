@@ -278,7 +278,7 @@ class DataProcess(object):
       test_indices = hkl.load(self.paths+'test_indices_gzip.hkl')
     return InputHandle(test_data, test_indices, self.input_param)
 
-def load_data(batch_size, val_batch_size, data_root, pre_seq_length=10, aft_seq_length=20, require_back=False):
+def load_data(batch_size, val_batch_size, data_root, num_workers=1, pre_seq_length=10, aft_seq_length=20, require_back=False):
     img_width = 128
     # pre_seq_length, aft_seq_length = 10, 10
     input_param = {
@@ -305,10 +305,10 @@ def load_data(batch_size, val_batch_size, data_root, pre_seq_length=10, aft_seq_
                               require_back=require_back)
 
     dataloader_train = torch.utils.data.DataLoader(
-        train_set, batch_size=batch_size, shuffle=True, pin_memory=False, num_workers=1)
+        train_set, batch_size=batch_size, shuffle=True, pin_memory=False, num_workers=num_workers)
     dataloader_validation = None
     dataloader_test = torch.utils.data.DataLoader(
-        test_set, batch_size=val_batch_size, shuffle=False, pin_memory=False, num_workers=1)
+        test_set, batch_size=val_batch_size, shuffle=False, pin_memory=False, num_workers=num_workers)
 
     return dataloader_train, dataloader_validation, dataloader_test, 0, 1
 
