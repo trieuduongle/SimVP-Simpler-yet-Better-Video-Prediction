@@ -64,6 +64,8 @@ class Exp:
         args = self.args
         self.model = SimVP(tuple(args.in_shape), args.hid_S,
                            args.hid_T, args.N_S, args.N_T).to(self.device)
+        if not args.resume_path and os.path.exists(args.resume_path):
+            self.model.load_state_dict(torch.load(args.resume_path))
 
     def _get_data(self):
         config = self.args.__dict__
@@ -114,11 +116,12 @@ class Exp:
             if epoch % args.log_step == 0:
                 with torch.no_grad():
                     vali_loss = self.vali(self.vali_loader)
-                    if epoch % args.save_epoch_freq == 0:
-                        self._save(name=str(epoch))
                 print_log("Epoch: {0} | Train Loss: {1:.4f} Vali Loss: {2:.4f}\n".format(
                     epoch + 1, train_loss, vali_loss))
                 recorder(vali_loss, self.model, self.path)
+
+            if epoch % args.save_epoch_freq == 0:
+                self._save(name=str(epoch))
 
         best_model_path = self.path + '/' + 'checkpoint.pth'
         self.model.load_state_dict(torch.load(best_model_path))
@@ -174,6 +177,7 @@ class Exp:
 
     # TODO: Enhance it for passing fixed input image
     def interpolate(self):
+        self.model.eval()
         inputs_lst, trues_lst, preds_lst = [], [], []
         for batch_x, batch_y in self.test_loader:
             pred_y = self.model(batch_x.to(self.device))
@@ -200,5 +204,3 @@ class Exp:
             data = im.fromarray(np.uint8(np.squeeze(np.array(pred).transpose(1,2,0)) * 255))
             
             data.save(os.path.join(folder_path,'input_'+ str(index) + '.png'))
-
-        

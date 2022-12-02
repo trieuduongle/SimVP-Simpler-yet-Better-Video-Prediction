@@ -300,11 +300,13 @@ def load_data(batch_size, val_batch_size, data_root, num_workers=1, pre_seq_leng
                               pre_seq_length,
                               aft_seq_length,
                               require_back=require_back)
+    print('loaded train_set')
     test_set = KTHDataset( test_input_handle.datas,
                               test_input_handle.indices,
                               pre_seq_length,
                               aft_seq_length,
                               require_back=require_back)
+    print('loaded test_set')
 
     dataloader_train = torch.utils.data.DataLoader(
         train_set, batch_size=batch_size, shuffle=True, pin_memory=False, num_workers=num_workers)
