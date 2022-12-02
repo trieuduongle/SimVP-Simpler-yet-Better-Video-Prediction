@@ -188,6 +188,15 @@ class Exp:
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
-        for index,pred in enumerate(preds):
+        for index,pred in enumerate(preds[0]):
             data = im.fromarray(pred)
-            data.save(os.path.join(folder_path, index + '.png'))
+            data.transpose(1,2,0)
+            data.save(os.path.join(folder_path,'pred_'+ index + '.png'))
+
+        
+        for index,pred in enumerate(inputs[0]):
+            data = im.fromarray(pred)
+            data.transpose(1,2,0)
+            data.save(os.path.join(folder_path,'input_'+ index + '.png'))
+
+        
