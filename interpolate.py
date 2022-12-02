@@ -18,11 +18,11 @@ def create_parser():
     parser.add_argument('--batch_size', default=16, type=int, help='Batch size')
     parser.add_argument('--val_batch_size', default=16, type=int, help='Batch size')
     parser.add_argument('--data_root', default='./data/')
-    parser.add_argument('--dataname', default='mmnist', choices=['mmnist', 'taxibj'])
+    parser.add_argument('--dataname', default='mmnist', choices=['mmnist', 'taxibj', 'kth'])
     parser.add_argument('--num_workers', default=8, type=int)
 
     # model parameters
-    parser.add_argument('--in_shape', default=[10, 1, 64, 64], type=int,nargs='*') # [10, 1, 64, 64] for mmnist, [4, 2, 32, 32] for taxibj  
+    parser.add_argument('--in_shape', default=[10, 1, 64, 64], type=int,nargs='*') # [10, 1, 64, 64] for mmnist, [4, 2, 32, 32] for taxibj, [10, 1, 128, 128] for kth  
     parser.add_argument('--hid_S', default=64, type=int)
     parser.add_argument('--hid_T', default=256, type=int)
     parser.add_argument('--N_S', default=4, type=int)
@@ -32,7 +32,9 @@ def create_parser():
     # Training parameters
     parser.add_argument('--epochs', default=51, type=int)
     parser.add_argument('--log_step', default=1, type=int)
+    parser.add_argument('--save_epoch_freq', default=10, type=int)
     parser.add_argument('--lr', default=0.01, type=float, help='Learning rate')
+    parser.add_argument('--resume_path', default='', type=str)
     return parser
 
 def main():
