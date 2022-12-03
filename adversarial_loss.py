@@ -129,7 +129,7 @@ class Discriminator(nn.Module):
 class AdversarialLoss(nn.Module):
     def __init__(self, gpu_id, gan_type='RGAN', gan_k=2,
                  lr_dis=1e-4):
-
+        print('including adv loss')
         super(AdversarialLoss, self).__init__()
         self.gan_type = gan_type
         self.gan_k = gan_k
@@ -159,7 +159,7 @@ class AdversarialLoss(nn.Module):
                     param.requires_grad = requires_grad
 
     def forward(self, fake, real):
-
+        print('adv traning')
         # D Loss
         for _ in range(self.gan_k):
             self.set_requires_grad(self.discriminator, True)
