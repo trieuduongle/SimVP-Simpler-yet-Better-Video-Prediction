@@ -65,6 +65,7 @@ class Exp:
         self.model = SimVP(tuple(args.in_shape), args.hid_S,
                            args.hid_T, args.N_S, args.N_T).to(self.device)
         if not args.resume_path and os.path.exists(args.resume_path):
+            print('resuming')
             self.model.load_state_dict(torch.load(args.resume_path))
 
     def _get_data(self):
