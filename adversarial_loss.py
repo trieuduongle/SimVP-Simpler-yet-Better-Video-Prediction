@@ -124,7 +124,8 @@ class Discriminator(nn.Module):
         self.criterion_adv = GANLoss(gan_type='vanilla').to(self.device)
 
     def forward(self, imgs):
-        img_flat = imgs.flatten
+        print(imgs.size())
+        img_flat = imgs.flatten()
         validity = self.model(img_flat)
         return validity
 
