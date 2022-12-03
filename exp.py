@@ -141,7 +141,7 @@ class Exp:
             if epoch % args.log_step == 0:
                 with torch.no_grad():
                     vali_loss = self.vali(self.vali_loader, epoch)
-                print_log("Epoch: {0} | Train Loss: {1:.4f} Vali Loss: {2:.4f} | Take {1:.4f} seconds\n".format(
+                print_log("Epoch: {0} | Train Loss: {1:.4f} Vali Loss: {2:.4f} | Take {3:.4f} seconds\n".format(
                     epoch + 1, train_loss, vali_loss, time.time() - start_time))
 
                 recorder(vali_loss, self.model, self.path)
@@ -174,12 +174,6 @@ class Exp:
         total_loss = np.average(total_loss)
         preds = np.concatenate(preds_lst, axis=0)
         trues = np.concatenate(trues_lst, axis=0)
-
-        sub_path = str(epoch + 1)
-        folder_path = os.path.join(self.path, sub_path)
-        check_dir(folder_path)
-        for np_data in ['trues' ,'preds']:
-            np.save(osp.join(folder_path, np_data + '_' + sub_path + '.npy'), vars()[np_data])
 
         mse, mae, ssim, psnr = metric(preds, trues, vali_loader.dataset.mean, vali_loader.dataset.std, True)
         print_log('vali mse:{:.4f}, mae:{:.4f}, ssim:{:.4f}, psnr:{:.4f}'.format(mse, mae, ssim, psnr))
