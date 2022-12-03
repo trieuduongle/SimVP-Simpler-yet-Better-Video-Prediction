@@ -12,6 +12,7 @@ from API import *
 from utils import *
 from PIL import Image as im
 import time
+from adversarial_loss import AdversarialLoss
 
 class Exp:
     def __init__(self, args):
@@ -59,6 +60,10 @@ class Exp:
         self._get_data()
         # build the model
         self._build_model()
+
+        self.criterion_adv = AdversarialLoss(gpu_ids=self.args.gpu, dist=self.args.dist, gan_type=self.args.gan_type,
+                                                             gan_k=1, lr_dis=self.args.lr_D, train_crop_size=40)
+        self.lambda_adv = self.args.lambda_adv
 
     def _build_model(self):
         args = self.args
@@ -130,6 +135,11 @@ class Exp:
                 pred_y = self._predict(batch_x)
 
                 loss = self.criterion(pred_y, batch_y)
+
+                adv_loss, d_loss = self.criterion_adv(pred_y, batch_y)
+                adv_loss = adv_loss * self.lambda_adv
+                loss += adv_loss
+
                 train_loss.append(loss.item())
                 train_pbar.set_description('train loss: {:.4f}'.format(loss.item()))
 

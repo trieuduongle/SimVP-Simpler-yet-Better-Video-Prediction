@@ -33,4 +33,8 @@ def create_parser():
     parser.add_argument('--save_epoch_freq', default=10, type=int)
     parser.add_argument('--lr', default=0.01, type=float, help='Learning rate')
     parser.add_argument('--resume_path', default='', type=str)
+
+    parser.add_argument('--lr_D', default=1e-4, type=float)
+    parser.add_argument('--gan_type', default='WGAN_GP', type=str)
+    parser.add_argument('--lambda_adv', default=5e-3, type=float)
     return parser
