@@ -213,8 +213,8 @@ class Exp:
                  batch_x, batch_y, pred_y], [inputs_lst, trues_lst, preds_lst]))
             break
         
-        inputs, preds = map(lambda data: np.concatenate(
-            data, axis=0), [inputs_lst, preds_lst])
+        inputs, trues, preds = map(lambda data: np.concatenate(
+            data, axis=0), [inputs_lst, trues_lst, preds_lst])
         print(preds.shape)
 
         folder_path = self.path+'/interpolation/preds/'
@@ -222,8 +222,6 @@ class Exp:
             os.makedirs(folder_path)
 
         for index,pred in enumerate(preds[0]):
-            print(np.uint8(np.squeeze(np.array(pred).transpose(1,2,0)) * 255))
-            print(np.uint8(np.squeeze(np.array(pred).transpose(1,2,0)) * 255).shape)
             data = im.fromarray(np.uint8(np.squeeze(np.array(pred).transpose(1,2,0)) * 255))
             data.save(os.path.join(folder_path,'pred_'+ str(index) + '.png'))
 
@@ -232,3 +230,7 @@ class Exp:
             data = im.fromarray(np.uint8(np.squeeze(np.array(pred).transpose(1,2,0)) * 255))
             
             data.save(os.path.join(folder_path,'input_'+ str(index) + '.png'))
+
+        for index,pred in enumerate(trues[0]):
+            data = im.fromarray(np.uint8(np.squeeze(np.array(pred).transpose(1,2,0)) * 255))
+            data.save(os.path.join(folder_path,'trues_'+ str(index) + '.png'))
