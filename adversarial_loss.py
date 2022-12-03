@@ -108,7 +108,7 @@ class GANLoss(nn.Module):
         return loss if is_disc else loss * self.loss_weight
 
 class Discriminator(nn.Module):
-    def __init__(self):
+    def __init__(self, device):
         super(Discriminator, self).__init__()
 
         self.model = nn.Sequential(
@@ -118,6 +118,8 @@ class Discriminator(nn.Module):
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(256, 1),
         )
+
+        self.device = device
 
         self.criterion_adv = GANLoss(gan_type='vanilla').to(self.device)
 
@@ -136,7 +138,8 @@ class AdversarialLoss(nn.Module):
 
         os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
         self.device = torch.device('cuda:{}'.format(0))
-        self.discriminator = Discriminator().to(self.device)
+
+        self.discriminator = Discriminator(self.device).to(self.device)
 
         self.optimizer = torch.optim.Adam(
                 self.discriminator.parameters(),
