@@ -1,1 +1,3 @@
 hickle==5.0.2
+tqdm==4.64.1
+scikit-image==0.19.3
