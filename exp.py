@@ -177,6 +177,7 @@ class Exp:
 
         sub_path = str(epoch + 1)
         folder_path = os.path.join(self.path, sub_path)
+        check_dir(folder_path)
         for np_data in ['trues' ,'preds']:
             np.save(osp.join(folder_path, np_data + '_' + sub_path + '.npy'), vars()[np_data])
 
