@@ -90,15 +90,13 @@ class Exp:
         pickle.dump(state, fw)
 
     def _predict(self, batch_x):
-        self.args.pre_seq_length = 10
-        self.args.aft_seq_length = 20
         if self.args.aft_seq_length == self.args.pre_seq_length:
             pred_y = self.model(batch_x)
         elif self.args.aft_seq_length < self.args.pre_seq_length:
             pred_y = self.model(batch_x)
             pred_y = pred_y[:, :self.args.aft_seq_length]
         elif self.args.aft_seq_length > self.args.pre_seq_length:
-            print('longger')
+            print('should here')
             pred_y = []
             d = self.args.aft_seq_length // self.args.pre_seq_length
             m = self.args.aft_seq_length % self.args.pre_seq_length

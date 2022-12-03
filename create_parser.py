@@ -24,6 +24,8 @@ def create_parser():
     parser.add_argument('--N_S', default=4, type=int)
     parser.add_argument('--N_T', default=8, type=int)
     parser.add_argument('--groups', default=4, type=int)
+    parser.add_argument('--pre_seq_length', default=10, type=int)
+    parser.add_argument('--aft_seq_length', default=20, type=int)
 
     # Training parameters
     parser.add_argument('--epochs', default=51, type=int)
@@ -32,14 +34,3 @@ def create_parser():
     parser.add_argument('--lr', default=0.01, type=float, help='Learning rate')
     parser.add_argument('--resume_path', default='', type=str)
     return parser
-
-
-if __name__ == '__main__':
-    args = create_parser().parse_args()
-    config = args.__dict__
-
-    exp = Exp(args)
-    print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>  start <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
-    exp.train(args)
-    print('>>>>>>>>>>>>>>>>>>>>>>>>>>>> testing <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
-    mse = exp.test(args)
