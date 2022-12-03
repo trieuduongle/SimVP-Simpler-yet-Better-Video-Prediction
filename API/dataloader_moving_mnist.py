@@ -148,9 +148,9 @@ def load_data(
         data_root, num_workers):
 
     train_set = MovingMNIST(root=data_root, is_train=True,
-                            n_frames_input=10, n_frames_output=20, num_objects=[2])
+                            n_frames_input=10, n_frames_output=10, num_objects=[2])
     test_set = MovingMNIST(root=data_root, is_train=False,
-                           n_frames_input=10, n_frames_output=20, num_objects=[2])
+                           n_frames_input=10, n_frames_output=10, num_objects=[2])
 
     dataloader_train = torch.utils.data.DataLoader(
         train_set, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=num_workers)
