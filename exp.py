@@ -11,7 +11,7 @@ from tqdm import tqdm
 from API import *
 from utils import *
 from PIL import Image as im
-
+import time
 
 class Exp:
     def __init__(self, args):
@@ -118,6 +118,7 @@ class Exp:
         recorder = Recorder(verbose=True)
 
         for epoch in range(config['epochs']):
+            start_time = time.time()
             train_loss = []
             self.model.train()
             train_pbar = tqdm(self.train_loader)
@@ -140,12 +141,13 @@ class Exp:
             if epoch % args.log_step == 0:
                 with torch.no_grad():
                     vali_loss = self.vali(self.vali_loader)
-                print_log("Epoch: {0} | Train Loss: {1:.4f} Vali Loss: {2:.4f}\n".format(
-                    epoch + 1, train_loss, vali_loss))
+                print_log("Epoch: {0} | Train Loss: {1:.4f} Vali Loss: {2:.4f} | Take {1:.4f} seconds\n".format(
+                    epoch + 1, train_loss, vali_loss, time.time() - start_time))
+
                 recorder(vali_loss, self.model, self.path)
 
             if epoch % args.save_epoch_freq == 0:
-                self._save(name=str(epoch))
+                self._save(name=str(epoch + 1))
 
         best_model_path = self.path + '/' + 'checkpoint.pth'
         self.model.load_state_dict(torch.load(best_model_path))
