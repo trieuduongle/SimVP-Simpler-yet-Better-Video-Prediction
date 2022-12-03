@@ -223,7 +223,7 @@ class Exp:
         for index,pred in enumerate(preds[0]):
             print(np.uint8(np.squeeze(np.array(pred).transpose(1,2,0)) * 255))
             print(np.uint8(np.squeeze(np.array(pred).transpose(1,2,0)) * 255).shape)
-            data = im.fromarray(np.uint8(np.squeeze(np.array(pred).transpose(1,2,0)) * 255))
+            data = im.fromarray(np.uint8(np.squeeze(np.array(pred).transpose(2,1,0)) * 255))
             data.save(os.path.join(folder_path,'pred_'+ str(index) + '.png'))
 
         
