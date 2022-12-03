@@ -89,6 +89,32 @@ class Exp:
         fw = open(os.path.join(self.checkpoints_path, name + '.pkl'), 'wb')
         pickle.dump(state, fw)
 
+    def _predict(self, batch_x):
+        self.args.pre_seq_length = 10
+        self.args.aft_seq_length = 20
+        if self.args.aft_seq_length == self.args.pre_seq_length:
+            pred_y = self.model(batch_x)
+        elif self.args.aft_seq_length < self.args.pre_seq_length:
+            pred_y = self.model(batch_x)
+            pred_y = pred_y[:, :self.args.aft_seq_length]
+        elif self.args.aft_seq_length > self.args.pre_seq_length:
+            print('longger')
+            pred_y = []
+            d = self.args.aft_seq_length // self.args.pre_seq_length
+            m = self.args.aft_seq_length % self.args.pre_seq_length
+            
+            cur_seq = batch_x.clone()
+            for _ in range(d):
+                cur_seq = self.model(cur_seq)
+                pred_y.append(cur_seq)
+
+            if m != 0:
+                cur_seq = self.model(cur_seq)
+                pred_y.append(cur_seq[:, :m])
+            
+            pred_y = torch.cat(pred_y, dim=1)
+        return pred_y
+
     def train(self, args):
         config = args.__dict__
         recorder = Recorder(verbose=True)
@@ -101,7 +127,7 @@ class Exp:
             for batch_x, batch_y in train_pbar:
                 self.optimizer.zero_grad()
                 batch_x, batch_y = batch_x.to(self.device), batch_y.to(self.device)
-                pred_y = self.model(batch_x)
+                pred_y = self._predict(batch_x)
 
                 loss = self.criterion(pred_y, batch_y)
                 train_loss.append(loss.item())
