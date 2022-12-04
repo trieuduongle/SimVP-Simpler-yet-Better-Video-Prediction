@@ -102,7 +102,6 @@ class Exp:
             pred_y = self.model(batch_x)
             pred_y = pred_y[:, :self.args.aft_seq_length]
         elif self.args.aft_seq_length > self.args.pre_seq_length:
-            print('should here')
             pred_y = []
             d = self.args.aft_seq_length // self.args.pre_seq_length
             m = self.args.aft_seq_length % self.args.pre_seq_length
@@ -137,8 +136,6 @@ class Exp:
                 loss = self.criterion(pred_y, batch_y)
 
                 adv_loss, d_loss = self.criterion_adv(pred_y, batch_y)
-                print(loss)
-                print(adv_loss)
                 adv_loss = adv_loss * self.lambda_adv
                 loss += adv_loss
 

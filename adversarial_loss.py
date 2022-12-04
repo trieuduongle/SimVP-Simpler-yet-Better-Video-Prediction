@@ -124,7 +124,6 @@ class Discriminator(nn.Module):
         self.criterion_adv = GANLoss(gan_type='vanilla').to(self.device)
 
     def forward(self, imgs):
-        print(imgs.size())
         img_flat = imgs.reshape(-1,np.prod(img_shape))
         validity = self.model(img_flat)
         return validity
@@ -163,7 +162,6 @@ class AdversarialLoss(nn.Module):
                     param.requires_grad = requires_grad
 
     def forward(self, fake, real):
-        print('adv traning')
         # D Loss
         for _ in range(self.gan_k):
             self.set_requires_grad(self.discriminator, True)
