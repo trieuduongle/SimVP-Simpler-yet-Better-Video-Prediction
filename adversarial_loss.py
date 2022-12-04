@@ -125,7 +125,7 @@ class Discriminator(nn.Module):
 
     def forward(self, imgs):
         print(imgs.size())
-        img_flat = imgs.flatten()
+        img_flat = imgs.reshape(-1,np.prod(img_shape))
         validity = self.model(img_flat)
         return validity
 
