@@ -10,7 +10,7 @@ img_shape = (10, 1, 64,64)
 class DiscriminatorBlock(nn.Module):
     def __init__(self, filters,strides):
         super(DiscriminatorBlock, self).__init__()
-        self.conv0 = nn.Conv2D(filters,kernel_size=4, strides=strides,padding='same')
+        self.conv0 = nn.Conv2d(filters,kernel_size=4, strides=strides,padding='same')
         self.norm1d = nn.InstanceNorm1d()
         self.leakyReLU = nn.LeakyReLU(negative_slope=0.2)
 
@@ -125,12 +125,12 @@ class Discriminator(nn.Module):
     def __init__(self, device):
         super(Discriminator, self).__init__()
 
-        self.conv0 =  nn.Conv2D(64, kernel_size=4, strides=2, padding='same')
+        self.conv0 =  nn.Conv2d(64, kernel_size=4, strides=2, padding='same')
         self.leakyReLU = nn.LeakyReLU(negative_slope=0.2)
         self.block0 = DiscriminatorBlock(128, 2)
         self.block1 = DiscriminatorBlock(256, 2)
         self.block2 = DiscriminatorBlock(512, 1)
-        self.conv1 = nn.Conv2D(1, kernel_size=4, strides=1, padding='same')
+        self.conv1 = nn.Conv2d(1, kernel_size=4, strides=1, padding='same')
 
         self.device = device
 
