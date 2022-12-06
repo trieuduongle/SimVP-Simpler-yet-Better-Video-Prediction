@@ -6,6 +6,20 @@ import os
 
 img_shape = (10, 1, 64,64)
 
+
+class DiscriminatorBlock(nn.Module):
+    def __init__(self, filters,strides):
+        super(DiscriminatorBlock, self).__init__()
+        self.conv0 = nn.Conv2D(filters,kernel_size=4, strides=strides,padding='same')
+        self.norm1d = nn.InstanceNorm1d()
+        self.leakyReLU = nn.LeakyReLU(negative_slope=0.2)
+
+    def forward(self, x):
+        x = self.conv0(x)
+        x = self.norm1d(x)
+        x = self.leakyReLU(x)
+        return x
+
 class GANLoss(nn.Module):
     """Define GAN loss.
     Args:
@@ -111,22 +125,25 @@ class Discriminator(nn.Module):
     def __init__(self, device):
         super(Discriminator, self).__init__()
 
-        self.model = nn.Sequential(
-            nn.Linear(int(np.prod(img_shape)), 512),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(512, 256),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(256, 1),
-        )
+        self.conv0 =  nn.Conv2D(64, kernel_size=4, strides=2, padding='same')
+        self.leakyReLU = nn.LeakyReLU(negative_slope=0.2)
+        self.block0 = DiscriminatorBlock(128, 2)
+        self.block1 = DiscriminatorBlock(256, 2)
+        self.block2 = DiscriminatorBlock(512, 1)
+        self.conv1 = nn.Conv2D(1, kernel_size=4, strides=1, padding='same')
 
         self.device = device
 
         self.criterion_adv = GANLoss(gan_type='vanilla').to(self.device)
 
-    def forward(self, imgs):
-        img_flat = imgs.reshape(-1,np.prod(img_shape))
-        validity = self.model(img_flat)
-        return validity
+    def forward(self, x):
+        x = self.conv0(x)
+        x = self.leakyReLU(x)
+        x = self.block0(x)
+        x = self.block1(x)
+        x = self.block2(x)
+        x = self.conv1(x)
+        return x
 
 class AdversarialLoss(nn.Module):
     def __init__(self, gpu_id, gan_type='RGAN', gan_k=2,
@@ -169,6 +186,8 @@ class AdversarialLoss(nn.Module):
             # real
             d_fake = self.discriminator(fake).detach()
             d_real = self.discriminator(real)
+
+            print(d_fake.size())
             d_real_loss = self.criterion_adv(d_real - torch.mean(d_fake), True,
                                                is_disc=True) * 0.5
             d_real_loss.backward()
