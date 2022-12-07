@@ -62,7 +62,7 @@ class Exp:
         self._build_model()
 
         self.criterion_adv = AdversarialLoss(gpu_id=self.args.gpu, gan_type=self.args.gan_type,
-                                                             gan_k=1, lr_dis=self.args.lr_D)
+                                                             gan_k=1, lr_dis=self.args.lr_D, args=self.args)
         self.lambda_adv = self.args.lambda_adv
 
     def _build_model(self):

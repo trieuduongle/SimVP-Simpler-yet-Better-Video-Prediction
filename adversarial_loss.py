@@ -208,17 +208,18 @@ class Discriminator(nn.Module):
         return x
 
 class AdversarialLoss(nn.Module):
-    def __init__(self, gpu_id, gan_type='RGAN', gan_k=2,
+    def __init__(self, gpu_id, args, gan_type='RGAN', gan_k=2,
                  lr_dis=1e-4):
         print('including adv loss')
         super(AdversarialLoss, self).__init__()
         self.gan_type = gan_type
         self.gan_k = gan_k
+        self.batch_size = args.batch_size
 
         os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
         self.device = torch.device('cuda:{}'.format(0))
 
-        self.discriminator = Discriminator(self.device).to(self.device)
+        self.discriminator = Discriminator(args).to(self.device)
 
         self.optimizer = torch.optim.Adam(
                 self.discriminator.parameters(),
