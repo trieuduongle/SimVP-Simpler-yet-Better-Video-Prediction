@@ -48,4 +48,6 @@ def create_parser():
     parser.add_argument('--d_sigmoid', type=bool, default=False, help='use sigmoid at the end of discriminator, default=False')
     parser.add_argument('--nc', type=int, default=3, help='number of input image color channels, default=3')
     parser.add_argument('--d_cond', type=bool, default=True, help='condition discriminator on input frames, default=`True`')
+    parser.add_argument('--nz', type=int, default=512, help='dimension of input noise vector z, default=512')
+    parser.add_argument('--ndf', type=int, default=512, help='feature dimension of first layer of discriminator, default=512')
     return parser
