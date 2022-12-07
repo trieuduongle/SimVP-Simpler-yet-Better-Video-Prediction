@@ -37,4 +37,15 @@ def create_parser():
     parser.add_argument('--lr_D', default=1e-4, type=float)
     parser.add_argument('--gan_type', default='WGAN_GP', type=str)
     parser.add_argument('--lambda_adv', default=5e-3, type=float)
+
+    parser.add_argument('--nframes_pred', type=int, default=6, help='number of video frames to predict in one sample, default=6')
+    parser.add_argument('--batch_norm', type=bool, default=False, help='use batch-normalization (not recommended), default=False')
+    parser.add_argument('--w_norm', type=bool, default=True, help='use weight scaling, default=True')
+    parser.add_argument('--loss', type=str, default='gan', help='which loss functions to use (choices: `gan`, `lsgan` or `wgan_gp`), default=`wgan_gp`')
+    parser.add_argument('--d_gdrop', type=bool, default=False, help='use generalized dropout layer (inject multiplicative Gaussian noise) for discriminator when using LSGAN loss, default=False')
+    parser.add_argument('--padding', type=str, default='zero', help='which padding to use (choices: `zero`, `replication`), default=`zero`')
+    parser.add_argument('--lrelu', type=bool, default=True, help='use leaky relu instead of relu, default=True')
+    parser.add_argument('--d_sigmoid', type=bool, default=False, help='use sigmoid at the end of discriminator, default=False')
+    parser.add_argument('--nc', type=int, default=3, help='number of input image color channels, default=3')
+    parser.add_argument('--d_cond', type=bool, default=True, help='condition discriminator on input frames, default=`True`')
     return parser

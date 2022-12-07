@@ -3,8 +3,54 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 import os
+from custom_layers import *
 
 img_shape = (10, 1, 64,64)
+
+def get_module_names(model):
+
+    names = []
+    for key, val in model.state_dict().items():
+        name = key.split('.')[0]
+        if not name in names:
+            names.append(name)
+    return names
+
+def deconv(layers, c_in, c_out, k_size, stride=1, pad=0, padding='zero', lrelu=True, batch_norm=False, w_norm=False, pixel_norm=False, only=False):
+    if padding=='replication':
+        layers.append(nn.ReplicationPad3d(pad))
+        pad = 0
+    if w_norm:  layers.append(EqualizedConv3d(c_in, c_out, k_size, stride, pad))
+    else:   layers.append(nn.Conv3d(c_in, c_out, k_size, stride, pad))
+    if not only:
+        if lrelu:       layers.append(nn.LeakyReLU(0.2))
+        else:           layers.append(nn.ReLU())
+        if batch_norm:  layers.append(nn.BatchNorm3d(c_out))
+        if pixel_norm:  layers.append(PixelwiseNormLayer())
+    return layers
+
+def conv(layers, c_in, c_out, k_size, stride=1, pad=0, padding='zero', lrelu=True, batch_norm=False, w_norm=False, d_gdrop=False, pixel_norm=False, only=False):
+
+    if padding=='replication':
+        layers.append(nn.ReplicationPad3d(pad))
+        pad = 0
+    if d_gdrop:         layers.append(GeneralizedDropOut(mode='prop', strength=0.0))
+    if w_norm:          layers.append(EqualizedConv3d(c_in, c_out, k_size, stride, pad, initializer='kaiming'))
+    else:               layers.append(nn.Conv3d(c_in, c_out, k_size, stride, pad))
+    if not only:
+        if lrelu:       layers.append(nn.LeakyReLU(0.2))
+        else:           layers.append(nn.ReLU())
+        if batch_norm:  layers.append(nn.BatchNorm3d(c_out))
+        if pixel_norm:  layers.append(PixelwiseNormLayer())
+    return layers
+
+def linear(layers, c_in, c_out, sig=True, w_norm=False):
+
+    layers.append(Flatten())
+    if w_norm:  layers.append(EqualizedLinear(c_in, c_out))
+    else:       layers.append(nn.Linear(c_in, c_out))
+    if sig:     layers.append(nn.Sigmoid())
+    return layers
 
 class GANLoss(nn.Module):
     """Define GAN loss.
@@ -108,25 +154,58 @@ class GANLoss(nn.Module):
         return loss if is_disc else loss * self.loss_weight
 
 class Discriminator(nn.Module):
-    def __init__(self, device):
+    def __init__(self, config):
         super(Discriminator, self).__init__()
+        self.config = config
+        self.nframes_pred = self.config.nframes_pred
+        self.batch_norm = config.batch_norm
+        self.w_norm = config.w_norm
+        if self.config.loss=='lsgan':
+            self.d_gdrop = True
+        else:
+            self.d_gdrop = config.d_gdrop
+        self.padding = config.padding
+        self.lrelu = config.lrelu
+        self.d_sigmoid = config.d_sigmoid
+        self.nz = config.nz
+        self.nc = config.nc
+        self.ndf = config.ndf
+        if self.config.d_cond==False:
+            self.nframes = self.config.nframes_pred
+        else:
+            self.nframes = config.nframes_in+config.nframes_pred
+        self.layer_name = None
+        self.module_names = []
+        self.model = self.get_init_dis()
 
-        self.model = nn.Sequential(
-            nn.Linear(int(np.prod(img_shape)), 512),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(512, 256),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(256, 1),
-        )
+    def get_init_dis(self):
 
-        self.device = device
+        model = nn.Sequential()
+        last_block, ndim = self.last_block()
+        model.add_module('from_rgb_block', self.from_rgb_block(ndim))
+        model.add_module('last_block', last_block)
+        self.module_names = get_module_names(model)
+        return model
 
-        self.criterion_adv = GANLoss(gan_type='vanilla').to(self.device)
+    def from_rgb_block(self, ndim):
 
-    def forward(self, imgs):
-        img_flat = imgs.reshape(-1,np.prod(img_shape))
-        validity = self.model(img_flat)
-        return validity
+        layers = []
+        layers = conv(layers, self.nc, ndim, 1, 1, 0, self.padding, self.lrelu, self.batch_norm, self.w_norm, self.d_gdrop, pixel_norm=False)
+        return  nn.Sequential(*layers)
+    def last_block(self):
+
+        # add MinibatchStdConcatLayer later.
+        ndim = self.ndf
+        layers = []
+        layers.append(MinibatchStdConcatLayer())
+        layers = conv(layers, ndim+1, ndim, 3, 1, 1, self.padding, self.lrelu, self.batch_norm, self.w_norm, self.d_gdrop, pixel_norm=False)
+        layers = conv(layers, ndim, ndim, (self.nframes,4,4), 1, 0, self.padding, self.lrelu, self.batch_norm, self.w_norm, self.d_gdrop, pixel_norm=False)
+        layers = linear(layers, ndim, 1, sig=self.d_sigmoid, w_norm=self.w_norm)
+        return  nn.Sequential(*layers), ndim
+
+    def forward(self, x):
+        x = self.model(x)
+        return x
 
 class AdversarialLoss(nn.Module):
     def __init__(self, gpu_id, gan_type='RGAN', gan_k=2,
@@ -148,6 +227,9 @@ class AdversarialLoss(nn.Module):
 
         self.criterion_adv = GANLoss(gan_type='vanilla').to(self.device)
 
+        self.real_label = torch.ones(self.batch_size)
+        self.fake_label = torch.zeros(self.batch_size)
+
     def set_requires_grad(self, nets, requires_grad=False):
         """Set requies_grad=Fasle for all the networks to avoid unnecessary computations
         Parameters:
@@ -167,27 +249,22 @@ class AdversarialLoss(nn.Module):
             self.set_requires_grad(self.discriminator, True)
             self.optimizer.zero_grad()
             # real
-            d_fake = self.discriminator(fake).detach()
-            d_real = self.discriminator(real)
-            d_real_loss = self.criterion_adv(d_real - torch.mean(d_fake), True,
-                                               is_disc=True) * 0.5
-            d_real_loss.backward()
+            d_real = self.discriminator(real.detach())
+            d_real_loss = self.criterion_adv(d_real, self.real_label)
+
             # fake
             d_fake = self.discriminator(fake.detach())
-            d_fake_loss = self.criterion_adv(d_fake - torch.mean(d_real.detach()), False,
-                                                is_disc=True) * 0.5
-            d_fake_loss.backward()
+            d_fake_loss = self.criterion_adv(d_fake, self.fake_label)
+            
             loss_d = d_real_loss + d_fake_loss
             
+            loss_d.backward()
             self.optimizer.step()
 
         # G Loss
         self.set_requires_grad(self.discriminator, False)
-        d_real = self.discriminator(real).detach()
-        d_fake = self.discriminator(fake)
-        g_real_loss = self.criterion_adv(d_real - torch.mean(d_fake), False, is_disc=False) * 0.5
-        g_fake_loss = self.criterion_adv(d_fake - torch.mean(d_real), True, is_disc=False) * 0.5
-        loss_g = g_real_loss + g_fake_loss
+        d_real = self.discriminator(real)
+        loss_g = self.criterion_adv(d_real, self.real_label)
 
         # Generator loss
         return loss_g, loss_d
