@@ -50,4 +50,5 @@ def create_parser():
     parser.add_argument('--d_cond', type=bool, default=True, help='condition discriminator on input frames, default=`True`')
     parser.add_argument('--nz', type=int, default=512, help='dimension of input noise vector z, default=512')
     parser.add_argument('--ndf', type=int, default=512, help='feature dimension of first layer of discriminator, default=512')
+    parser.add_argument('--nframes_in', type=int, default=10, help='number of input video frames in one sample, default=10')
     return parser
