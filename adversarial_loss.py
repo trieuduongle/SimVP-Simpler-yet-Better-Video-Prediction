@@ -125,8 +125,6 @@ class Discriminator(nn.Module):
 
         self.device = device
 
-        self.criterion_adv = GANLoss(gan_type='vanilla').to(self.device)
-
     def weight_init(self, mean, std):
         for m in self._modules:
             normal_init(self._modules[m], mean, std)
