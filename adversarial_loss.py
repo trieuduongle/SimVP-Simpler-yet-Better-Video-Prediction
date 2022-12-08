@@ -1,3 +1,4 @@
+from torch.autograd import Variable
 import numpy as np
 import torch
 import torch.nn as nn
@@ -108,25 +109,37 @@ class GANLoss(nn.Module):
         return loss if is_disc else loss * self.loss_weight
 
 class Discriminator(nn.Module):
-    def __init__(self, device):
+    def __init__(self, device, d=64):
         super(Discriminator, self).__init__()
-
-        self.model = nn.Sequential(
-            nn.Linear(int(np.prod(img_shape)), 512),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(512, 256),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(256, 1),
-        )
+        # First param if the number of channel input+target
+        self.conv1 = nn.Conv2d(2, d, 4, 2, 1)
+        self.conv2 = nn.Conv2d(d, d * 2, 4, 2, 1)
+        self.conv2_bn = nn.BatchNorm2d(d * 2)
+        self.conv3 = nn.Conv2d(d * 2, d * 4, 4, 2, 1)
+        self.conv3_bn = nn.BatchNorm2d(d * 4)
+        self.conv4 = nn.Conv2d(d * 4, d * 8, 4, 1, 1)
+        self.conv4_bn = nn.BatchNorm2d(d * 8)
+        self.conv5 = nn.Conv2d(d * 8, 1, 4, 1, 1)
 
         self.device = device
 
         self.criterion_adv = GANLoss(gan_type='vanilla').to(self.device)
 
-    def forward(self, imgs):
-        img_flat = imgs.reshape(-1,np.prod(img_shape))
-        validity = self.model(img_flat)
-        return validity
+    def weight_init(self, mean, std):
+        for m in self._modules:
+            normal_init(self._modules[m], mean, std)
+
+    def forward(self, input, target):
+        # Concatenate on channel dim
+        # (batch_size, channel, width, height)
+        x = torch.cat([input, target], 1)
+        x = F.leaky_relu(self.conv1(x), 0.2)
+        x = F.leaky_relu(self.conv2_bn(self.conv2(x)), 0.2)
+        x = F.leaky_relu(self.conv3_bn(self.conv3(x)), 0.2)
+        x = F.leaky_relu(self.conv4_bn(self.conv4(x)), 0.2)
+        x = F.sigmoid(self.conv5(x))
+
+        return x
 
 class AdversarialLoss(nn.Module):
     def __init__(self, gpu_id, gan_type='RGAN', gan_k=2,
@@ -161,33 +174,28 @@ class AdversarialLoss(nn.Module):
                 for param in net.parameters():
                     param.requires_grad = requires_grad
 
-    def forward(self, fake, real):
+    def forward(self, inputs, fake, real):
         # D Loss
         for _ in range(self.gan_k):
             self.set_requires_grad(self.discriminator, True)
             self.optimizer.zero_grad()
+            # check detach
             # real
-            d_fake = self.discriminator(fake).detach()
-            d_real = self.discriminator(real)
-            d_real_loss = self.criterion_adv(d_real - torch.mean(d_fake), True,
-                                               is_disc=True) * 0.5
-            d_real_loss.backward()
+            d_real = self.discriminator(inputs, real).squeeze()
+            d_real_loss = self.criterion_adv(d_real, Variable(torch.ones(d_real.size())))
+            # d_real_loss.backward()
             # fake
-            d_fake = self.discriminator(fake.detach())
-            d_fake_loss = self.criterion_adv(d_fake - torch.mean(d_real.detach()), False,
-                                                is_disc=True) * 0.5
-            d_fake_loss.backward()
-            loss_d = d_real_loss + d_fake_loss
-            
+            d_fake = self.discriminator(inputs, fake.detach()).squeeze()
+            d_fake_loss = self.criterion_adv(d_fake, Variable(torch.zeros(d_fake.size())))
+            # d_fake_loss.backward()
+            loss_d = (d_real_loss + d_fake_loss) * 0.5
+            loss_d.backward()
             self.optimizer.step()
 
         # G Loss
         self.set_requires_grad(self.discriminator, False)
-        d_real = self.discriminator(real).detach()
-        d_fake = self.discriminator(fake)
-        g_real_loss = self.criterion_adv(d_real - torch.mean(d_fake), False, is_disc=False) * 0.5
-        g_fake_loss = self.criterion_adv(d_fake - torch.mean(d_real), True, is_disc=False) * 0.5
-        loss_g = g_real_loss + g_fake_loss
+        d_fake = self.discriminator(inputs, fake)
+        loss_g = self.criterion_adv(d_fake, Variable(torch.ones(d_fake.size())))
 
         # Generator loss
         return loss_g, loss_d
@@ -196,3 +204,8 @@ class AdversarialLoss(nn.Module):
         D_state_dict = self.discriminator.state_dict()
         D_optim_state_dict = self.optimizer.state_dict()
         return D_state_dict, D_optim_state_dict
+
+def normal_init(m, mean, std):
+    if isinstance(m, nn.ConvTranspose2d) or isinstance(m, nn.Conv2d):
+        m.weight.data.normal_(mean, std)
+        m.bias.data.zero_()
