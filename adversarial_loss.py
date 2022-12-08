@@ -31,6 +31,8 @@ class GANLoss(nn.Module):
 
         if self.gan_type == 'vanilla':
             self.loss = nn.BCEWithLogitsLoss()
+        if self.gan_type == 'normalBCE':
+            self.loss = nn.BCELoss()
         elif self.gan_type == 'lsgan':
             self.loss = nn.MSELoss()
         elif self.gan_type == 'wgan':
@@ -159,7 +161,7 @@ class AdversarialLoss(nn.Module):
                 betas=(0, 0.9), eps=1e-8, lr=lr_dis
             )
 
-        self.criterion_adv = GANLoss(gan_type='vanilla').to(self.device)
+        self.criterion_adv = GANLoss(gan_type='normalBCE').to(self.device)
 
     def set_requires_grad(self, nets, requires_grad=False):
         """Set requies_grad=Fasle for all the networks to avoid unnecessary computations
@@ -186,11 +188,11 @@ class AdversarialLoss(nn.Module):
             # check detach
             # real
             d_real = self.discriminator(inputs, real).squeeze()
-            d_real_loss = self.criterion_adv(d_real, Variable(torch.ones(d_real.size())))
+            d_real_loss = self.criterion_adv(d_real, Variable(torch.ones(d_real.size())), is_disc=True)
             # d_real_loss.backward()
             # fake
             d_fake = self.discriminator(inputs, fake.detach()).squeeze()
-            d_fake_loss = self.criterion_adv(d_fake, Variable(torch.zeros(d_fake.size())))
+            d_fake_loss = self.criterion_adv(d_fake, Variable(torch.zeros(d_fake.size())), is_disc=True)
             # d_fake_loss.backward()
             loss_d = (d_real_loss + d_fake_loss) * 0.5
             loss_d.backward()
@@ -199,7 +201,7 @@ class AdversarialLoss(nn.Module):
         # G Loss
         self.set_requires_grad(self.discriminator, False)
         d_fake = self.discriminator(inputs, fake)
-        loss_g = self.criterion_adv(d_fake, Variable(torch.ones(d_fake.size())))
+        loss_g = self.criterion_adv(d_fake, Variable(torch.ones(d_fake.size())), is_disc=True)
 
         # Generator loss
         return loss_g, loss_d
