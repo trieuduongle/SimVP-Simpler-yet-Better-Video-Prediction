@@ -111,22 +111,29 @@ class Discriminator(nn.Module):
     def __init__(self, device):
         super(Discriminator, self).__init__()
 
-        self.model = nn.Sequential(
-            nn.Linear(int(np.prod(img_shape)), 512),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(512, 256),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(256, 1),
-        )
+        self.input_size = [64 ,64]
+        self.hidden_dim = 64
+        self.height, self.width = self.input_size
 
-        self.device = device
-
-        self.criterion_adv = GANLoss(gan_type='vanilla').to(self.device)
+        self.linear_1 = nn.Linear(self.height * self.width, self.hidden_dim * 4)
+        self.linear_2 = nn.Linear(self.hidden_dim * 4, self.hidden_dim * 2)
+        self.linear_3 = nn.Linear(self.hidden_dim * 2, self.hidden_dim)
+        self.linear_4 = nn.Linear(self.hidden_dim, 1)
+        self.dropout = nn.Dropout(0.3)
+        self.relu = nn.LeakyReLU(0.2, inplace=True)
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self, imgs):
-        img_flat = imgs.reshape(-1,np.prod(img_shape))
-        validity = self.model(img_flat)
-        return validity
+        x = x.view(-1, self.height * self.width)
+        x = self.relu(self.linear_1(x))
+        x = self.dropout(x)
+        x = self.relu(self.linear_2(x))
+        x = self.dropout(x)
+        x = self.relu(self.linear_3(x))
+        x = self.dropout(x)
+        out = self.sigmoid(self.linear_4(x))
+
+        return out
 
 class AdversarialLoss(nn.Module):
     def __init__(self, gpu_id, gan_type='RGAN', gan_k=2,
