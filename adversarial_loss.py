@@ -179,8 +179,6 @@ class AdversarialLoss(nn.Module):
         fake=  fake.reshape(10, -1, 64, 64)
         real = real.reshape(10, -1, 64, 64)
 
-        print('after transpose')
-        print(inputs.size())
         # D Loss
         for _ in range(self.gan_k):
             self.set_requires_grad(self.discriminator, True)
