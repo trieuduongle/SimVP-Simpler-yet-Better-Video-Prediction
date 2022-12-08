@@ -111,8 +111,8 @@ class GANLoss(nn.Module):
 class Discriminator(nn.Module):
     def __init__(self, device, d=64):
         super(Discriminator, self).__init__()
-        # First param if the number of channel input+target
-        self.conv1 = nn.Conv2d(20, d, 4, 2, 1)
+        # First param if the number of channel input+target with batch_size included
+        self.conv1 = nn.Conv2d(32, d, 4, 2, 1)
         self.conv2 = nn.Conv2d(d, d * 2, 4, 2, 1)
         self.conv2_bn = nn.BatchNorm2d(d * 2)
         self.conv3 = nn.Conv2d(d * 2, d * 4, 4, 2, 1)
