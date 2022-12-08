@@ -186,11 +186,11 @@ class AdversarialLoss(nn.Module):
             # check detach
             # real
             d_real = self.discriminator(inputs, real).squeeze()
-            d_real_loss = self.criterion_adv(d_real, Variable(torch.ones(d_real.size())), is_disc=True)
+            d_real_loss = self.criterion_adv(d_real, True, is_disc=True)
             # d_real_loss.backward()
             # fake
             d_fake = self.discriminator(inputs, fake.detach()).squeeze()
-            d_fake_loss = self.criterion_adv(d_fake, Variable(torch.zeros(d_fake.size())), is_disc=True)
+            d_fake_loss = self.criterion_adv(d_fake, False, is_disc=True)
             # d_fake_loss.backward()
             loss_d = (d_real_loss + d_fake_loss) * 0.5
             loss_d.backward()
@@ -199,7 +199,7 @@ class AdversarialLoss(nn.Module):
         # G Loss
         self.set_requires_grad(self.discriminator, False)
         d_fake = self.discriminator(inputs, fake)
-        loss_g = self.criterion_adv(d_fake, Variable(torch.ones(d_fake.size())), is_disc=True)
+        loss_g = self.criterion_adv(d_fake, True, is_disc=True)
 
         # Generator loss
         return loss_g, loss_d
