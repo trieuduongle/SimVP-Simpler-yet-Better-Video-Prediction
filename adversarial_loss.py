@@ -112,14 +112,14 @@ class Discriminator(nn.Module):
     def __init__(self, device, d=64):
         super(Discriminator, self).__init__()
         # First param if the number of channel input+target
-        self.conv1 = nn.Conv2d(2, d, 4, 2, 1)
-        self.conv2 = nn.Conv2d(d, d * 2, 4, 2, 1)
+        self.conv1 = nn.Conv3d(2, d, 4, 2, 1)
+        self.conv2 = nn.Conv3d(d, d * 2, 4, 2, 1)
         self.conv2_bn = nn.BatchNorm2d(d * 2)
-        self.conv3 = nn.Conv2d(d * 2, d * 4, 4, 2, 1)
+        self.conv3 = nn.Conv3d(d * 2, d * 4, 4, 2, 1)
         self.conv3_bn = nn.BatchNorm2d(d * 4)
-        self.conv4 = nn.Conv2d(d * 4, d * 8, 4, 1, 1)
+        self.conv4 = nn.Conv3d(d * 4, d * 8, 4, 1, 1)
         self.conv4_bn = nn.BatchNorm2d(d * 8)
-        self.conv5 = nn.Conv2d(d * 8, 1, 4, 1, 1)
+        self.conv5 = nn.Conv3d(d * 8, 1, 4, 1, 1)
 
         self.device = device
 
@@ -175,13 +175,19 @@ class AdversarialLoss(nn.Module):
                     param.requires_grad = requires_grad
 
     def forward(self, inputs, fake, real):
+        inputs = inputs.transpose(0,2,1,3,4)
+        fake=  fake.transpose(0,2,1,3,4)
+        real = real.transpose(0,2,1,3,4)
+
+        print('after transpose')
+        print(inputs.size())
         # D Loss
         for _ in range(self.gan_k):
             self.set_requires_grad(self.discriminator, True)
             self.optimizer.zero_grad()
             # check detach
             # real
-            d_real = self.discriminator(inputs, real).squeeze()
+            d_real = self.discriminator(inputs.transpose(0,2,1,3,4), real).squeeze()
             d_real_loss = self.criterion_adv(d_real, Variable(torch.ones(d_real.size())))
             # d_real_loss.backward()
             # fake

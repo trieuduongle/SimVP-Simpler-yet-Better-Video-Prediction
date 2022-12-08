@@ -136,6 +136,8 @@ class Exp:
                 loss = self.criterion(pred_y, batch_y)
 
                 adv_loss, d_loss = self.criterion_adv(batch_x, pred_y, batch_y)
+                print('check in exp')
+                print(batch_x.size())
                 adv_loss = adv_loss * self.lambda_adv
                 loss += adv_loss
 
