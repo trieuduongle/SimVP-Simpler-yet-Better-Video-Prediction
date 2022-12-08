@@ -187,7 +187,7 @@ class AdversarialLoss(nn.Module):
             self.optimizer.zero_grad()
             # check detach
             # real
-            d_real = self.discriminator(inputs.transpose(0,2,1,3,4), real).squeeze()
+            d_real = self.discriminator(inputs, real).squeeze()
             d_real_loss = self.criterion_adv(d_real, Variable(torch.ones(d_real.size())))
             # d_real_loss.backward()
             # fake
