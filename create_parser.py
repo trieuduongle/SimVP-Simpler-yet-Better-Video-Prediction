@@ -19,6 +19,7 @@ def create_parser():
 
     # model parameters
     parser.add_argument('--in_shape', default=[10, 1, 64, 64], type=int,nargs='*') # [10, 1, 64, 64] for mmnist, [4, 2, 32, 32] for taxibj, [10, 1, 128, 128] for kth  
+    parser.add_argument('--image_channels', default=1, type=int, help='Image channels, default will be 1 - grayscale image')
     parser.add_argument('--hid_S', default=64, type=int)
     parser.add_argument('--hid_T', default=256, type=int)
     parser.add_argument('--N_S', default=4, type=int)
@@ -35,6 +36,6 @@ def create_parser():
     parser.add_argument('--resume_path', default='', type=str)
 
     parser.add_argument('--lr_D', default=1e-4, type=float)
-    parser.add_argument('--gan_type', default='WGAN_GP', type=str)
+    parser.add_argument('--gan_type', default='vanilla', type=str)
     parser.add_argument('--lambda_adv', default=5e-3, type=float)
     return parser

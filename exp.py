@@ -7,12 +7,12 @@ import pickle
 import logging
 import numpy as np
 from model import SimVP
+from model.losses import AdversarialLoss
 from tqdm import tqdm
 from API import *
 from utils import *
 from PIL import Image as im
 import time
-from adversarial_loss import AdversarialLoss
 
 class Exp:
     def __init__(self, args):
@@ -61,7 +61,7 @@ class Exp:
         # build the model
         self._build_model()
 
-        self.criterion_adv = AdversarialLoss(gpu_id=self.args.gpu, gan_type=self.args.gan_type,
+        self.criterion_adv = AdversarialLoss(image_channels = self.args.image_channels,gpu_id=self.args.gpu, gan_type=self.args.gan_type,
                                                              gan_k=1, lr_dis=self.args.lr_D)
         self.lambda_adv = self.args.lambda_adv
 
