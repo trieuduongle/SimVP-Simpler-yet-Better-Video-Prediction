@@ -77,7 +77,7 @@ class AdversarialLoss(nn.Module):
         os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
         self.device = torch.device('cuda:{}'.format(0))
 
-        self.discriminator = SNTemporalPatchGANDiscriminator(image_channels * 2).to(self.device)
+        self.discriminator = SNTemporalPatchGANDiscriminator(image_channels).to(self.device)
 
         self.optimizer = torch.optim.Adam(
             self.discriminator.parameters(),
