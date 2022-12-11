@@ -125,6 +125,9 @@ class Exp:
         for epoch in range(config['epochs']):
             start_time = time.time()
             train_loss = []
+            non_gan_loss = []
+            gan_loss = []
+
             self.model.train()
             train_pbar = tqdm(self.train_loader)
 
@@ -134,25 +137,30 @@ class Exp:
                 pred_y = self._predict(batch_x)
 
                 loss = self.criterion(pred_y, batch_y)
+                non_gan_loss.append(loss.item())
 
                 adv_loss, d_loss = self.criterion_adv(pred_y, batch_y)
                 adv_loss = adv_loss * self.lambda_adv
+                gan_loss.append(adv_loss.item())
+
                 loss += adv_loss
 
                 train_loss.append(loss.item())
-                train_pbar.set_description('train loss: {:.4f}'.format(loss.item()))
+                train_pbar.set_description('train loss: {0:.4f} - NonGAN loss: {1:.4f} - GAN loss: {2:.4f}'.format(loss.item(), non_gan_loss[-1], gan_loss[-1]))
 
                 loss.backward()
                 self.optimizer.step()
                 self.scheduler.step()
 
             train_loss = np.average(train_loss)
+            non_gan_loss = np.average(non_gan_loss)
+            gan_loss = np.average(gan_loss)
 
             if epoch % args.log_step == 0:
                 with torch.no_grad():
                     vali_loss = self.vali(self.vali_loader, epoch)
-                print_log("Epoch: {0} | Train Loss: {1:.4f} Vali Loss: {2:.4f} | Take {3:.4f} seconds\n".format(
-                    epoch + 1, train_loss, vali_loss, time.time() - start_time))
+                print_log("Epoch: {0} | Train Loss: {1:.4f} - NonGAN loss: {2:.4f} - GAN loss: {3:.4f} Vali Loss: {4:.4f} | Take {5:.4f} seconds\n".format(
+                    epoch + 1, train_loss, non_gan_loss, gan_loss, vali_loss, time.time() - start_time))
 
                 recorder(vali_loss, self.model, self.path)
 
