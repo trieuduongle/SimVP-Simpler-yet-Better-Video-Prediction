@@ -6,7 +6,7 @@ import torch
 import pickle
 import logging
 import numpy as np
-from model import SimVP
+from model.simvp_model import SimVP
 from model.losses import AdversarialLoss
 from tqdm import tqdm
 from API import *
