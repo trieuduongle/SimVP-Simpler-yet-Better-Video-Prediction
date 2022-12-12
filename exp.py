@@ -143,8 +143,9 @@ class Exp:
                 non_gan_loss.append(loss.item())
 
                 adv_loss, d_loss = self.criterion_adv(pred_y, batch_y)
-                adv_loss = adv_loss * self.lambda_adv
                 gan_loss.append(adv_loss.item())
+                adv_loss = adv_loss * self.lambda_adv
+                
 
                 loss += adv_loss
 
