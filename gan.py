@@ -110,7 +110,7 @@ class Exp:
 
     def _select_criterion(self):
         self.criterion = torch.nn.MSELoss()
-        self.criterion_adv = GANLoss(gan_type='lsgan').to(self.device)
+        self.criterion_adv = GANLoss(device=self.device, gan_type='lsgan').to(self.device)
 
     def _save(self, name=''):
         torch.save({
