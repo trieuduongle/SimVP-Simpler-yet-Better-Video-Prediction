@@ -155,6 +155,8 @@ class Exp:
                 self.optimizer.step()
                 self.scheduler.step()
 
+                break
+
             train_loss = np.average(train_loss)
             non_gan_loss = np.average(non_gan_loss)
             gan_loss = np.average(gan_loss)
@@ -162,6 +164,7 @@ class Exp:
             if epoch % args.log_step == 0:
                 with torch.no_grad():
                     vali_loss = self.vali(self.vali_loader, epoch)
+                    self.interpolate(epoch)
                 print_log("Epoch: {0} | Train Loss: {1:.4f} - NonGAN loss: {2:.4f} - GAN loss: {3:.4f} Vali Loss: {4:.4f} | Take {5:.4f} seconds\n".format(
                     epoch + 1, train_loss, non_gan_loss, gan_loss, vali_loss, time.time() - start_time))
 
@@ -224,7 +227,7 @@ class Exp:
         return mse
 
     # TODO: Enhance it for passing fixed input image
-    def interpolate(self):
+    def interpolate(self, epoch):
         self.model.eval()
         inputs_lst, trues_lst, preds_lst = [], [], []
         for batch_x, batch_y in self.test_loader:
@@ -237,7 +240,7 @@ class Exp:
             data, axis=0), [inputs_lst, trues_lst, preds_lst])
         print(preds.shape)
 
-        folder_path = self.path+'/interpolation/preds/'
+        folder_path = self.path+f'/interpolation/{epoch}/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
@@ -245,7 +248,6 @@ class Exp:
             data = im.fromarray(np.uint8(np.squeeze(np.array(pred).transpose(1,2,0)) * 255))
             data.save(os.path.join(folder_path,'pred_'+ str(index) + '.png'))
 
-        
         for index,pred in enumerate(inputs[0]):
             data = im.fromarray(np.uint8(np.squeeze(np.array(pred).transpose(1,2,0)) * 255))
             
