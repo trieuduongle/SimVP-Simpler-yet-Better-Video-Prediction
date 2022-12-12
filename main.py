@@ -1,4 +1,4 @@
-from exp import Exp
+from gan import Exp
 from create_parser import create_parser
 
 import warnings
