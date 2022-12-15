@@ -86,7 +86,7 @@ class Exp:
                 print('resuming')
                 checkpoint = torch.load(path)
                 self.model.load_state_dict(checkpoint[CheckpointKey.GENERATOR_STATE_DICT])
-                self.optimizer.load_state_dict(checkpoint[CheckpointKey.GENERATOR_STATE_DICT])
+                self.optimizer.load_state_dict(checkpoint[CheckpointKey.GENERATOR_OPTIMIZER_STATE_DICT])
                 self.discriminator.load_state_dict(checkpoint[CheckpointKey.DISCRIMINATOR_STATE_DICT])
                 self.discriminator_optimizer.load_state_dict(checkpoint[CheckpointKey.DISCRIMINATOR_OPTIMIZER_STATE_DICT])
             else:
