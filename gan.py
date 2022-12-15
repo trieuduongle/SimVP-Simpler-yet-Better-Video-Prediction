@@ -29,6 +29,7 @@ class Exp:
         self._get_data()
         self._select_optimizer()
         self._select_criterion()
+        self._try_resume_trained_model(self.args.resume_path)
 
     def _acquire_device(self):
         if self.args.use_gpu:
@@ -62,8 +63,6 @@ class Exp:
         self._get_data()
         # build the model
         self._build_model()
-
-        self._try_resume_trained_model(self.args.resume_path)
 
         self.lambda_adv = self.args.lambda_adv
 
