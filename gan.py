@@ -15,13 +15,6 @@ from API import *
 from utils import *
 from PIL import Image as im
 import time
-from enum import Enum
-
-class CheckpointKey(Enum):
-    GENERATOR_STATE_DICT = 'GENERATOR_STATE_DICT'
-    GENERATOR_OPTIMIZER_STATE_DICT = 'GENERATOR_OPTIMIZER_STATE_DICT'
-    DISCRIMINATOR_STATE_DICT = 'DISCRIMINATOR_STATE_DICT'
-    DISCRIMINATOR_OPTIMIZER_STATE_DICT = 'DISCRIMINATOR_OPTIMIZER_STATE_DICT'
 
 class Exp:
     def __init__(self, args):
@@ -85,10 +78,10 @@ class Exp:
             if os.path.exists(path):
                 print('resuming')
                 checkpoint = torch.load(path)
-                self.model.load_state_dict(checkpoint[CheckpointKey.GENERATOR_STATE_DICT])
-                self.optimizer.load_state_dict(checkpoint[CheckpointKey.GENERATOR_OPTIMIZER_STATE_DICT])
-                self.discriminator.load_state_dict(checkpoint[CheckpointKey.DISCRIMINATOR_STATE_DICT])
-                self.discriminator_optimizer.load_state_dict(checkpoint[CheckpointKey.DISCRIMINATOR_OPTIMIZER_STATE_DICT])
+                self.model.load_state_dict(checkpoint['GENERATOR_STATE_DICT'])
+                self.optimizer.load_state_dict(checkpoint['GENERATOR_OPTIMIZER_STATE_DICT'])
+                self.discriminator.load_state_dict(checkpoint['DISCRIMINATOR_STATE_DICT'])
+                self.discriminator_optimizer.load_state_dict(checkpoint['DISCRIMINATOR_OPTIMIZER_STATE_DICT'])
             else:
                 raise (ValueError('Resume path does not exist'))
 
