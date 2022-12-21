@@ -333,6 +333,6 @@ class Exp:
             data = im.fromarray(np.uint8(np.squeeze(np.array(pred).transpose(1,2,0)) * 255))
             data.save(os.path.join(folder_path,'trues_'+ str(index) + '.png'))
     
-    def merge_temporal_dim_to_batch_dim(inputs):
+    def merge_temporal_dim_to_batch_dim(self, inputs):
         in_shape = list(inputs.shape)
         return inputs.view([in_shape[0] * in_shape[1]] + in_shape[2:])
