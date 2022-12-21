@@ -70,6 +70,7 @@ class Exp:
         args = self.args
         self.model = SimVP(tuple(args.in_shape), args.hid_S,
                            args.hid_T, args.N_S, args.N_T).to(self.device)
+        self.spatial_discriminator = SNTemporalPatchGANDiscriminator(args.image_channels, conv_type='2d').to(self.device)
         self.discriminator = SNTemporalPatchGANDiscriminator(args.image_channels).to(self.device)
     
     def _try_resume_trained_model(self, path):
@@ -81,6 +82,8 @@ class Exp:
                 self.optimizer.load_state_dict(checkpoint['GENERATOR_OPTIMIZER_STATE_DICT'])
                 self.discriminator.load_state_dict(checkpoint['DISCRIMINATOR_STATE_DICT'])
                 self.discriminator_optimizer.load_state_dict(checkpoint['DISCRIMINATOR_OPTIMIZER_STATE_DICT'])
+                self.spatial_discriminator.load_state_dict(checkpoint['SPATIAL_DISCRIMINATOR_STATE_DICT'])
+                self.spatial_discriminator_optimizer.load_state_dict(checkpoint['SPATIAL_DISCRIMINATOR_OPTIMIZER_STATE_DICT'])
             else:
                 raise (ValueError('Resume path does not exist'))
 
@@ -93,6 +96,10 @@ class Exp:
         self.optimizer = torch.optim.Adam(
             self.model.parameters(), lr=self.args.lr)
         self.discriminator_optimizer = torch.optim.SGD(
+            self.discriminator.parameters(),
+            lr=self.args.lr_D, momentum=0.9
+        )
+        self.spatial_discriminator_optimizer = torch.optim.SGD(
             self.discriminator.parameters(),
             lr=self.args.lr_D, momentum=0.9
         )
@@ -109,7 +116,9 @@ class Exp:
             'GENERATOR_STATE_DICT': self.model.state_dict(),
             'GENERATOR_OPTIMIZER_STATE_DICT': self.optimizer.state_dict(),
             'DISCRIMINATOR_STATE_DICT': self.discriminator.state_dict(),
-            'DISCRIMINATOR_OPTIMIZER_STATE_DICT': self.discriminator_optimizer.state_dict()
+            'DISCRIMINATOR_OPTIMIZER_STATE_DICT': self.discriminator_optimizer.state_dict(),
+            'SPATIAL_DISCRIMINATOR_STATE_DICT': self.spatial_discriminator.state_dict(),
+            'SPATIAL_DISCRIMINATOR_OPTIMIZER_STATE_DICT': self.spatial_discriminator_optimizer.state_dict()
         }, os.path.join(
             self.checkpoints_path, name + '.pth'))
         state = self.scheduler.state_dict()
@@ -149,9 +158,11 @@ class Exp:
             non_gan_loss = []
             gan_loss = []
             discriminator_loss = []
+            spatial_discriminator_loss = []
 
             self.model.train()
             self.discriminator.train()
+            self.spatial_discriminator.train()
             
             train_pbar = tqdm(self.train_loader)
 
@@ -181,7 +192,25 @@ class Exp:
 
 
                 # ---------------------
-                #  Train Discriminator
+                #  Train Spatial Discriminator
+                # ---------------------
+                self.spatial_discriminator_optimizer.zero_grad()
+                d_real = self.spatial_discriminator(self.merge_temporal_dim_to_batch_dim(batch_y))
+
+                loss_d_real = self.criterion_adv(d_real, True, is_disc=True) * 0.5
+                loss_d_real.backward()
+
+                d_fake = self.spatial_discriminator(self.merge_temporal_dim_to_batch_dim(pred_y.detach()))
+                loss_d_fake = self.criterion_adv(d_fake, False, is_disc=True) * 0.5
+                loss_d_fake.backward()
+
+                d_loss = loss_d_real + loss_d_fake
+                spatial_discriminator_loss.append(d_loss.item())
+
+                self.spatial_discriminator_optimizer.step()
+
+                # ---------------------
+                #  Train Temporal Discriminator
                 # ---------------------
 
                 self.discriminator_optimizer.zero_grad()
@@ -199,22 +228,23 @@ class Exp:
 
                 self.discriminator_optimizer.step()
 
-                train_pbar.set_description('train loss: {0:.4f} - NonGAN loss: {1:.4f} - Raw GAN loss: {2:.9f} - Discriminator loss: {3:.9f}'.format(loss.item(), non_gan_loss[-1], gan_loss[-1], discriminator_loss[-1]))
+                train_pbar.set_description('train loss: {0:.4f} - NonGAN loss: {1:.4f} - Raw GAN loss: {2:.9f} - Temporal Discriminator loss: {3:.9f} - Spatial Discriminator loss: {4:9f}'.format(loss.item(), non_gan_loss[-1], gan_loss[-1], discriminator_loss[-1], spatial_discriminator_loss[-1]))
 
 
             train_loss = np.average(train_loss)
             non_gan_loss = np.average(non_gan_loss)
             gan_loss = np.average(gan_loss)
             discriminator_loss = np.average(discriminator_loss)
+            spatial_discriminator_loss = np.average(spatial_discriminator_loss)
 
             if epoch % args.log_step == 0:
                 with torch.no_grad():
                     vali_loss = self.vali(self.vali_loader, epoch)
                     self.interpolate(epoch + 1)
-                print_log("Epoch: {0} | Train Loss: {1:.4f} - NonGAN loss: {2:.4f} - GAN loss: {3:.9f} - Discriminator loss: {4:.9f} Vali Loss: {5:.4f} | Take {6:.4f} seconds\n".format(
-                    epoch + 1, train_loss, non_gan_loss, gan_loss, discriminator_loss, vali_loss, time.time() - start_time))
+                print_log("Epoch: {0} | Train Loss: {1:.4f} - NonGAN loss: {2:.4f} - GAN loss: {3:.9f} - Temporal Discriminator loss: {4:.9f} - Spatial Discriminator loss: {5:9f} - Vali Loss: {6:.4f} | Take {7:.4f} seconds\n".format(
+                    epoch + 1, train_loss, non_gan_loss, gan_loss, discriminator_loss, spatial_discriminator_loss , vali_loss, time.time() - start_time))
 
-                recorder(vali_loss, self.model, self.optimizer, self.discriminator, self.discriminator_optimizer , self.path)
+                recorder(vali_loss, self.model, self.optimizer, self.discriminator, self.discriminator_optimizer, self.spatial_discriminator, self.spatial_discriminator_optimizer , self.path)
 
             if epoch % args.save_epoch_freq == 0:
                 self._save(name=str(epoch + 1))
@@ -302,3 +332,7 @@ class Exp:
         for index,pred in enumerate(trues[0]):
             data = im.fromarray(np.uint8(np.squeeze(np.array(pred).transpose(1,2,0)) * 255))
             data.save(os.path.join(folder_path,'trues_'+ str(index) + '.png'))
+    
+    def merge_temporal_dim_to_batch_dim(inputs):
+        in_shape = list(inputs.shape)
+        return inputs.view([in_shape[0] * in_shape[1]] + in_shape[2:])
