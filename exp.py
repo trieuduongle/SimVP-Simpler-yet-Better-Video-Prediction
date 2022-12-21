@@ -150,7 +150,7 @@ class Exp:
                 loss += adv_loss
 
                 train_loss.append(loss.item())
-                train_pbar.set_description('train loss: {0:.4f} - NonGAN loss: {1:.4f} - GAN loss: {2:.4f}'.format(loss.item(), non_gan_loss[-1], gan_loss[-1]))
+                train_pbar.set_description('train loss: {0:.4f} - NonGAN loss: {1:.4f} - Raw GAN loss: {2:.9f}'.format(loss.item(), non_gan_loss[-1], gan_loss[-1]))
 
                 loss.backward()
                 self.optimizer.step()
