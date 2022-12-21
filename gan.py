@@ -195,12 +195,12 @@ class Exp:
                 #  Train Spatial Discriminator
                 # ---------------------
                 self.spatial_discriminator_optimizer.zero_grad()
-                d_real = self.spatial_discriminator(self.merge_temporal_dim_to_batch_dim(batch_y))
+                d_real = self.spatial_discriminator(self.merge_temporal_dim_to_batch_dim(batch_y), transpose=False)
 
                 loss_d_real = self.criterion_adv(d_real, True, is_disc=True) * 0.5
                 loss_d_real.backward()
 
-                d_fake = self.spatial_discriminator(self.merge_temporal_dim_to_batch_dim(pred_y.detach()))
+                d_fake = self.spatial_discriminator(self.merge_temporal_dim_to_batch_dim(pred_y.detach(), transpose=False))
                 loss_d_fake = self.criterion_adv(d_fake, False, is_disc=True) * 0.5
                 loss_d_fake.backward()
 

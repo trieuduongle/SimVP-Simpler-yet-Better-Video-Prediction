@@ -41,10 +41,12 @@ class SNTemporalPatchGANDiscriminator(BaseModule):
         )
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self, xs):
+    def forward(self, xs, transpose = True):
         # B, L, C, H, W = xs.shape
         # B, C, L, H, W = xs_t.shape
-        xs_t = torch.transpose(xs, 1, 2)
+        xs_t = xs
+        if transpose:
+            xs_t = torch.transpose(xs, 1, 2)
         c1 = self.conv1(xs_t)
         c2 = self.conv2(c1)
         c3 = self.conv3(c2)
