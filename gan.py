@@ -70,7 +70,7 @@ class Exp:
         args = self.args
         self.model = SimVP(tuple(args.in_shape), args.hid_S,
                            args.hid_T, args.N_S, args.N_T).to(self.device)
-        self.spatial_discriminator = SNTemporalPatchGANDiscriminator(args.image_channels, conv_type='2d').to(self.device)
+        self.spatial_discriminator = SNTemporalPatchGANDiscriminator(args.image_channels, conv_by='2d').to(self.device)
         self.discriminator = SNTemporalPatchGANDiscriminator(args.image_channels).to(self.device)
     
     def _try_resume_trained_model(self, path):
@@ -100,7 +100,7 @@ class Exp:
             lr=self.args.lr_D, momentum=0.9
         )
         self.spatial_discriminator_optimizer = torch.optim.SGD(
-            self.discriminator.parameters(),
+            self.spatial_discriminator.parameters(),
             lr=self.args.lr_D, momentum=0.9
         )
         self.scheduler = torch.optim.lr_scheduler.OneCycleLR(
