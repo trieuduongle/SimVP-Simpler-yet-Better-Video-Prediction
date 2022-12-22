@@ -65,6 +65,7 @@ class Exp:
         self._build_model()
 
         self.lambda_adv = self.args.lambda_adv
+        self.lambda_spatial_adv = self.args.lambda_spatial_adv
 
     def _build_model(self):
         args = self.args
@@ -156,7 +157,8 @@ class Exp:
             start_time = time.time()
             train_loss = []
             non_gan_loss = []
-            gan_loss = []
+            discriminator_gan_loss = []
+            spatial_discriminator_gan_loss = []
             discriminator_loss = []
             spatial_discriminator_loss = []
 
@@ -181,9 +183,19 @@ class Exp:
                 non_gan_loss.append(loss.item())
 
                 adv_loss = self.criterion_adv(self.discriminator(pred_y), True, is_disc=False)
-                gan_loss.append(adv_loss.item())
+                discriminator_gan_loss.append(adv_loss.item())
                 adv_loss = adv_loss * self.lambda_adv
                 loss += adv_loss
+
+                adv_loss = self.criterion_adv(
+                    self.spatial_discriminator(self.merge_temporal_dim_to_batch_dim(pred_y), transpose=False),
+                    True,
+                    is_disc=False
+                )
+                spatial_discriminator_gan_loss.append(adv_loss.item())
+                adv_loss = adv_loss * self.lambda_spatial_adv
+                loss += adv_loss
+
                 train_loss.append(loss.item())
 
                 loss.backward()
@@ -228,12 +240,13 @@ class Exp:
 
                 self.discriminator_optimizer.step()
 
-                train_pbar.set_description('train loss: {0:.4f} - NonGAN loss: {1:.4f} - Raw GAN loss: {2:.9f} - Temporal Discriminator loss: {3:.9f} - Spatial Discriminator loss: {4:9f}'.format(loss.item(), non_gan_loss[-1], gan_loss[-1], discriminator_loss[-1], spatial_discriminator_loss[-1]))
+                train_pbar.set_description('train loss: {0:.4f} - NonGAN loss: {1:.4f} - Temporal Discriminator GAN loss: {2:.9f} - Spatial Discriminator GAN loss: {3:.9f} - Temporal Discriminator loss: {4:.9f} - Spatial Discriminator loss: {5:9f}'.format(loss.item(), non_gan_loss[-1], discriminator_gan_loss[-1], spatial_discriminator_gan_loss[-1], discriminator_loss[-1], spatial_discriminator_loss[-1]))
 
 
             train_loss = np.average(train_loss)
             non_gan_loss = np.average(non_gan_loss)
-            gan_loss = np.average(gan_loss)
+            discriminator_gan_loss = np.average(discriminator_gan_loss)
+            spatial_discriminator_gan_loss = np.average(spatial_discriminator_gan_loss)
             discriminator_loss = np.average(discriminator_loss)
             spatial_discriminator_loss = np.average(spatial_discriminator_loss)
 
@@ -241,8 +254,8 @@ class Exp:
                 with torch.no_grad():
                     vali_loss = self.vali(self.vali_loader, epoch)
                     self.interpolate(epoch + 1)
-                print_log("Epoch: {0} | Train Loss: {1:.4f} - NonGAN loss: {2:.4f} - GAN loss: {3:.9f} - Temporal Discriminator loss: {4:.9f} - Spatial Discriminator loss: {5:9f} - Vali Loss: {6:.4f} | Take {7:.4f} seconds\n".format(
-                    epoch + 1, train_loss, non_gan_loss, gan_loss, discriminator_loss, spatial_discriminator_loss , vali_loss, time.time() - start_time))
+                print_log("Epoch: {0} | Train Loss: {1:.4f} - NonGAN loss: {2:.4f} - Temporal Discriminator GAN loss: {3:.9f} - Spatial Discriminator GAN loss: {4:.9f} - Temporal Discriminator loss: {5:.9f} - Spatial Discriminator loss: {6:9f} - Vali Loss: {7:.4f} | Take {8:.4f} seconds\n".format(
+                    epoch + 1, train_loss, non_gan_loss, discriminator_gan_loss, spatial_discriminator_gan_loss, discriminator_loss, spatial_discriminator_loss , vali_loss, time.time() - start_time))
 
                 recorder(vali_loss, self.model, self.optimizer, self.discriminator, self.discriminator_optimizer, self.spatial_discriminator, self.spatial_discriminator_optimizer , self.path)
 

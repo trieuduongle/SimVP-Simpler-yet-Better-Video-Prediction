@@ -38,4 +38,5 @@ def create_parser():
     parser.add_argument('--lr_D', default=1e-4, type=float)
     parser.add_argument('--gan_type', default='vanilla', type=str)
     parser.add_argument('--lambda_adv', default=5e-3, type=float)
+    parser.add_argument('--lambda_spatial_adv', default=5e-3, type=float)
     return parser
