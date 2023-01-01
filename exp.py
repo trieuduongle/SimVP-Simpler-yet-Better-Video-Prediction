@@ -254,15 +254,15 @@ class Exp:
 
         outputs_and_expectations = torch.cat((pred_y, batch_y), 0)
 
-        path_to_epoch = os.path.join(self.sample_path, str(epoch))
+        path_to_epoch = os.path.join(self.args.sample_path, str(epoch))
 
         check_dir(path_to_epoch)
 
-        self.writer.add_image(f"inputs", make_grid(batch_x.data, nrow=self.pre_seq_length), epoch)
-        self.writer.add_image(f"outputs", self.normalize_generated_images(pred_y.data, nrow=self.aft_seq_length), epoch)
-        self.writer.add_image(f"expected", self.normalize_generated_images(batch_y.data, nrow=self.aft_seq_length), epoch)
-        save_image(batch_x.data, os.path.join(path_to_epoch, "inputs.png"), nrow=self.pre_seq_length)
-        save_image(outputs_and_expectations.data, os.path.join(path_to_epoch, "outputs_and_expectations.png"), nrow=self.aft_seq_length)
+        self.writer.add_image(f"inputs", make_grid(batch_x.data, nrow=self.args.pre_seq_length), epoch)
+        self.writer.add_image(f"outputs", self.normalize_generated_images(pred_y.data, nrow=self.args.aft_seq_length), epoch)
+        self.writer.add_image(f"expected", self.normalize_generated_images(batch_y.data, nrow=self.args.aft_seq_length), epoch)
+        save_image(batch_x.data, os.path.join(path_to_epoch, "inputs.png"), nrow=self.args.pre_seq_length)
+        save_image(outputs_and_expectations.data, os.path.join(path_to_epoch, "outputs_and_expectations.png"), nrow=self.args.aft_seq_length)
         self.model.train()
     
     def normalize_generated_images(self, batch_images, **kwargs):
