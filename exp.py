@@ -160,7 +160,7 @@ class Exp:
 
             if epoch % args.log_step == 0:
                 with torch.no_grad():
-                    vali_loss = self.vali(self.vali_loader, epoch)
+                    vali_loss = self.vali(self.vali_loader)
                 log_str= "Epoch: {0} | Train Loss: {1:.4f} Vali Loss: {2:.4f} | Take {3:.4f} seconds\n".format(
                     epoch + 1, train_loss, vali_loss, time.time() - start_time)
                 print_log(log_str)
