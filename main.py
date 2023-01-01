@@ -36,6 +36,7 @@ def create_parser():
     parser.add_argument('--lr', default=0.01, type=float, help='Learning rate')
     parser.add_argument('--resume_path', default='', type=str)
     parser.add_argument('--sample_path', type=str, default='./samples')
+    parser.add_argument('--sample_epoch', type=int, default=1)
 
     parser.add_argument('--log_path', type=str, default='./logs')
     return parser
