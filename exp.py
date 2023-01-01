@@ -263,8 +263,8 @@ class Exp:
         print(self.normalize_generated_images(pred_y.data, nrow=self.args.aft_seq_length).size())
 
         self.writer.add_image(f"inputs", make_grid(batch_x.data, nrow=self.args.pre_seq_length), epoch)
-        self.writer.add_image(f"outputs", self.normalize_generated_images(pred_y.data, nrow=self.args.aft_seq_length), epoch)
-        self.writer.add_image(f"expected", self.normalize_generated_images(batch_y.data, nrow=self.args.aft_seq_length), epoch)
+        self.writer.add_image(f"outputs", make_grid(pred_y.data, nrow=self.args.aft_seq_length), epoch)
+        self.writer.add_image(f"expected", make_grid(batch_y.data, nrow=self.args.aft_seq_length), epoch)
         save_image(batch_x.data, os.path.join(path_to_epoch, "inputs.png"), nrow=self.args.pre_seq_length)
         save_image(outputs_and_expectations.data, os.path.join(path_to_epoch, "outputs_and_expectations.png"), nrow=self.args.aft_seq_length)
         self.model.train()
