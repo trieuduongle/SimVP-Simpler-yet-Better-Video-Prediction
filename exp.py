@@ -234,8 +234,8 @@ class Exp:
         from tensorboardX import SummaryWriter
         # from logger import Logger
         # self.logger = Logger(self.log_path)
-        check_dir(self.log_path)
-        self.writer = SummaryWriter(log_dir=self.log_path)
+        check_dir(self.args.log_path)
+        self.writer = SummaryWriter(log_dir=self.args.log_path)
     
     @torch.no_grad()
     def generate_samples(self, epoch):
