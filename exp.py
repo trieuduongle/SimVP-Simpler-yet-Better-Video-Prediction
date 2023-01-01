@@ -29,6 +29,8 @@ class Exp:
         self._select_optimizer()
         self._select_criterion()
 
+        self.build_tensorboard()
+
     def _acquire_device(self):
         if self.args.use_gpu:
             os.environ["CUDA_VISIBLE_DEVICES"] = str(self.args.gpu)
