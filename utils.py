@@ -25,3 +25,10 @@ def output_namespace(namespace):
 def check_dir(path):
     if not os.path.exists(path):
         os.makedirs(path)
+
+def write_log(writer, log_str, epoch, g_loss, vali_loss):
+
+    writer.add_scalar('data/g_loss', g_loss.item(), epoch)
+    writer.add_scalar('data/vali_loss', vali_loss.item(), epoch)
+
+    writer.add_text('logs', log_str, epoch)

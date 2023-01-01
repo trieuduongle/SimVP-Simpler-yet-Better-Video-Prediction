@@ -136,18 +136,12 @@ class Exp:
 
             if epoch % args.log_step == 0:
                 with torch.no_grad():
-                    vali_loss = self.vali(self.vali_loader)
-                    if epoch % (args.log_step * 100) == 0:
-                        self._save(name=str(epoch))
-                print_log("Epoch: {0} | Train Loss: {1:.4f} Vali Loss: {2:.4f}\n".format(
-                    epoch + 1, train_loss, vali_loss))
-                recorder(vali_loss, self.model, self.path)
-
-            if epoch % args.log_step == 0:
-                with torch.no_grad():
                     vali_loss = self.vali(self.vali_loader, epoch)
-                print_log("Epoch: {0} | Train Loss: {1:.4f} Vali Loss: {2:.4f} | Take {3:.4f} seconds\n".format(
-                    epoch + 1, train_loss, vali_loss, time.time() - start_time))
+                log_str= "Epoch: {0} | Train Loss: {1:.4f} Vali Loss: {2:.4f} | Take {3:.4f} seconds\n".format(
+                    epoch + 1, train_loss, vali_loss, time.time() - start_time)
+                print_log(log_str)
+
+                write_log(self.writer, log_str, epoch + 1, train_loss, vali_loss)
 
                 recorder(vali_loss, self.model, self.path)
 
