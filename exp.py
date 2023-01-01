@@ -260,7 +260,7 @@ class Exp:
 
         print(batch_x.size())
         print(pred_y.size())
-        print(self.normalize_generated_images(pred_y.data, nrow=self.args.aft_seq_length))
+        print(self.normalize_generated_images(pred_y.data, nrow=self.args.aft_seq_length).size())
 
         self.writer.add_image(f"inputs", make_grid(batch_x.data, nrow=self.args.pre_seq_length), epoch)
         self.writer.add_image(f"outputs", self.normalize_generated_images(pred_y.data, nrow=self.args.aft_seq_length), epoch)
