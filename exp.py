@@ -258,6 +258,10 @@ class Exp:
 
         check_dir(path_to_epoch)
 
+        print(batch_x.size())
+        print(pred_y.size())
+        print(self.normalize_generated_images(pred_y.data, nrow=self.args.aft_seq_length))
+
         self.writer.add_image(f"inputs", make_grid(batch_x.data, nrow=self.args.pre_seq_length), epoch)
         self.writer.add_image(f"outputs", self.normalize_generated_images(pred_y.data, nrow=self.args.aft_seq_length), epoch)
         self.writer.add_image(f"expected", self.normalize_generated_images(batch_y.data, nrow=self.args.aft_seq_length), epoch)
