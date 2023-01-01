@@ -6,6 +6,9 @@ import torch
 import pickle
 import logging
 import numpy as np
+import time
+
+from torchvision.utils import save_image, make_grid
 from model import SimVP
 from tqdm import tqdm
 from API import *
@@ -64,14 +67,25 @@ class Exp:
         self.model = SimVP(tuple(args.in_shape), args.hid_S,
                            args.hid_T, args.N_S, args.N_T).to(self.device)
 
+        path = os.path.join(args.resume_path, '_G.pth')
+        if path and os.path.exists(path):
+            print('resuming model')
+            self.model.load_state_dict(torch.load(path))
+
     def _get_data(self):
         config = self.args.__dict__
         self.train_loader, self.vali_loader, self.test_loader, self.data_mean, self.data_std = load_data(**config)
         self.vali_loader = self.test_loader if self.vali_loader is None else self.vali_loader
 
     def _select_optimizer(self):
+        args = self.args
         self.optimizer = torch.optim.Adam(
             self.model.parameters(), lr=self.args.lr)
+
+        path = os.path.join(args.resume_path, '_G_optimizer.pth')
+        if path and os.path.exists(path):
+            self.optimizer.load_state_dict(torch.load(path))
+
         self.scheduler = torch.optim.lr_scheduler.OneCycleLR(
             self.optimizer, max_lr=self.args.lr, steps_per_epoch=len(self.train_loader), epochs=self.args.epochs)
         return self.optimizer
@@ -81,7 +95,9 @@ class Exp:
 
     def _save(self, name=''):
         torch.save(self.model.state_dict(), os.path.join(
-            self.checkpoints_path, name + '.pth'))
+            self.checkpoints_path, name + '_G.pth'))
+        torch.save(self.optimizer.state_dict(), os.path.join(
+            self.checkpoints_path, name + '_G_optimizer.pth'))
         state = self.scheduler.state_dict()
         fw = open(os.path.join(self.checkpoints_path, name + '.pkl'), 'wb')
         pickle.dump(state, fw)
@@ -91,9 +107,12 @@ class Exp:
         recorder = Recorder(verbose=True)
 
         for epoch in range(config['epochs']):
+            start_time = time.time()
             train_loss = []
             self.model.train()
             train_pbar = tqdm(self.train_loader)
+
+            step = 0
 
             for batch_x, batch_y in train_pbar:
                 self.optimizer.zero_grad()
@@ -108,6 +127,11 @@ class Exp:
                 self.optimizer.step()
                 self.scheduler.step()
 
+                step = step +1
+
+                if step ==2:
+                    break
+
             train_loss = np.average(train_loss)
 
             if epoch % args.log_step == 0:
@@ -118,6 +142,17 @@ class Exp:
                 print_log("Epoch: {0} | Train Loss: {1:.4f} Vali Loss: {2:.4f}\n".format(
                     epoch + 1, train_loss, vali_loss))
                 recorder(vali_loss, self.model, self.path)
+
+            if epoch % args.log_step == 0:
+                with torch.no_grad():
+                    vali_loss = self.vali(self.vali_loader, epoch)
+                print_log("Epoch: {0} | Train Loss: {1:.4f} Vali Loss: {2:.4f} | Take {3:.4f} seconds\n".format(
+                    epoch + 1, train_loss, vali_loss, time.time() - start_time))
+
+                recorder(vali_loss, self.model, self.path)
+
+            if epoch % args.save_epoch_freq == 0:
+                self._save(name=str(epoch + 1))
 
         best_model_path = self.path + '/' + 'checkpoint.pth'
         self.model.load_state_dict(torch.load(best_model_path))
@@ -170,3 +205,41 @@ class Exp:
         for np_data in ['inputs', 'trues', 'preds']:
             np.save(osp.join(folder_path, np_data + '.npy'), vars()[np_data])
         return mse
+
+    def build_tensorboard(self):
+        from tensorboardX import SummaryWriter
+        # from logger import Logger
+        # self.logger = Logger(self.log_path)
+        check_dir(self.log_path)
+        self.writer = SummaryWriter(log_dir=self.log_path)
+    
+    @torch.no_grad()
+    def generate_samples(self, epoch):
+        self.model.eval()
+
+        # TODO: improve this one
+        for batch_x, batch_y in self.test_loader:
+            batch_x = batch_x.to(self.device)
+            batch_y = batch_y.to(self.device)
+            pred_y = self.model(batch_x.to(self.device))
+            break
+
+        batch_x = batch_x[0]
+        batch_y = batch_y[0]
+        pred_y = pred_y[0]
+
+        outputs_and_expectations = torch.cat((pred_y, batch_y), 0)
+
+        path_to_epoch = os.path.join(self.sample_path, str(epoch))
+
+        check_dir(path_to_epoch)
+
+        self.writer.add_image(f"inputs", make_grid(batch_x.data, nrow=self.pre_seq_length), epoch)
+        self.writer.add_image(f"outputs", self.normalize_generated_images(pred_y.data, nrow=self.aft_seq_length), epoch)
+        self.writer.add_image(f"expected", self.normalize_generated_images(batch_y.data, nrow=self.aft_seq_length), epoch)
+        save_image(batch_x.data, os.path.join(path_to_epoch, "inputs.png"), nrow=self.pre_seq_length)
+        save_image(outputs_and_expectations.data, os.path.join(path_to_epoch, "outputs_and_expectations.png"), nrow=self.aft_seq_length)
+        self.model.train()
+    
+    def normalize_generated_images(self, batch_images, **kwargs):
+        return make_grid(batch_images, **kwargs).mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0)
