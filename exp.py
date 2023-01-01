@@ -266,4 +266,4 @@ class Exp:
         self.model.train()
     
     def normalize_generated_images(self, batch_images, **kwargs):
-        return make_grid(batch_images, **kwargs).mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0)
+        return make_grid(batch_images, **kwargs).mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).to("cpu", torch.uint8).numpy()
