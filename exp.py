@@ -138,8 +138,6 @@ class Exp:
             self.model.train()
             train_pbar = tqdm(self.train_loader)
 
-            step = 0
-
             for batch_x, batch_y in train_pbar:
                 self.optimizer.zero_grad()
                 batch_x, batch_y = batch_x.to(self.device), batch_y.to(self.device)
@@ -152,11 +150,6 @@ class Exp:
                 loss.backward()
                 self.optimizer.step()
                 self.scheduler.step()
-
-                step = step +1
-
-                if step ==2:
-                    break
 
             train_loss = np.average(train_loss)
 
@@ -173,7 +166,7 @@ class Exp:
 
             # Sample images
             if epoch % args.sample_epoch == 0:
-                self.generate_samples(epoch)
+                self.generate_samples(epoch + 1)
 
             if epoch % args.save_epoch_freq == 0:
                 self._save(name=str(epoch + 1))
