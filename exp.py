@@ -69,9 +69,9 @@ class Exp:
         self.model = SimVP(tuple(args.in_shape), args.hid_S,
                            args.hid_T, args.N_S, args.N_T).to(self.device)
 
-        path = os.path.join(args.resume_path, '_G.pth')
+        path = args.resume_path + '_G.pth'
         if path and os.path.exists(path):
-            print('resuming model')
+            print(f'resuming model at {path}')
             self.model.load_state_dict(torch.load(path))
 
     def _get_data(self):
@@ -84,8 +84,9 @@ class Exp:
         self.optimizer = torch.optim.Adam(
             self.model.parameters(), lr=self.args.lr)
 
-        path = os.path.join(args.resume_path, '_G_optimizer.pth')
+        path = args.resume_path + '_G_optimizer.pth'
         if path and os.path.exists(path):
+            print(f'resuming optimizer at {path}')
             self.optimizer.load_state_dict(torch.load(path))
 
         self.scheduler = torch.optim.lr_scheduler.OneCycleLR(
