@@ -166,16 +166,16 @@ class Exp:
                 with torch.no_grad():
                     vali_loss = self.vali(self.vali_loader)
                 log_str= "Epoch: {0} | Train Loss: {1:.4f} Vali Loss: {2:.4f} | Take {3:.4f} seconds\n".format(
-                    epoch + 1, train_loss, vali_loss, time.time() - start_time)
+                    epoch, train_loss, vali_loss, time.time() - start_time)
                 print_log(log_str)
 
-                write_log(self.writer, log_str, epoch + 1, train_loss, vali_loss)
+                write_log(self.writer, log_str, epoch, train_loss, vali_loss)
 
                 recorder(vali_loss, self.model, self.path)
 
             # Sample images
             if epoch == start or epoch % args.sample_epoch == 0:
-                self.generate_samples(epoch + 1)
+                self.generate_samples(epoch)
 
             if epoch == start or epoch % args.save_epoch_freq == 0:
                 self._save(epoch=str(epoch))
