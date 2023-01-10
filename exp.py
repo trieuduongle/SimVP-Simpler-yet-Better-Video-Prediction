@@ -135,7 +135,7 @@ class Exp:
 
         # Start with trained model
         if self.args.pretrained_model:
-            start = self.args.pretrained_model + 1
+            start = int(self.args.pretrained_model) + 1
         else:
             start = 1
 
