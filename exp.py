@@ -69,7 +69,7 @@ class Exp:
         self.model = SimVP(tuple(args.in_shape), args.hid_S,
                            args.hid_T, args.N_S, args.N_T).to(self.device)
 
-        path = args.resume_path + '_G.pth'
+        path = os.path.join(args.model_save_path, f'{args.pretrained_model}_G.pth')
         if path and os.path.exists(path):
             print(f'resuming model at {path}')
             self.model.load_state_dict(torch.load(path))
@@ -84,7 +84,7 @@ class Exp:
         self.optimizer = torch.optim.Adam(
             self.model.parameters(), lr=self.args.lr)
 
-        path = args.resume_path + '_G_optimizer.pth'
+        path = os.path.join(args.model_save_path, f'{args.pretrained_model}_G_optimizer.pth')
         if path and os.path.exists(path):
             print(f'resuming optimizer at {path}')
             self.optimizer.load_state_dict(torch.load(path))
@@ -96,13 +96,13 @@ class Exp:
     def _select_criterion(self):
         self.criterion = torch.nn.MSELoss()
 
-    def _save(self, name=''):
+    def _save(self, epoch=''):
         torch.save(self.model.state_dict(), os.path.join(
-            self.checkpoints_path, name + '_G.pth'))
+            self.checkpoints_path, f'{epoch}_G.pth'))
         torch.save(self.optimizer.state_dict(), os.path.join(
-            self.checkpoints_path, name + '_G_optimizer.pth'))
+            self.checkpoints_path, f'{epoch}_G_optimizer.pth'))
         state = self.scheduler.state_dict()
-        fw = open(os.path.join(self.checkpoints_path, name + '.pkl'), 'wb')
+        fw = open(os.path.join(self.checkpoints_path, f'{epoch}.pkl'), 'wb')
         pickle.dump(state, fw)
 
     def _predict(self, batch_x):
@@ -133,7 +133,15 @@ class Exp:
         config = args.__dict__
         recorder = Recorder(verbose=True)
 
-        for epoch in range(config['epochs']):
+        # Start with trained model
+        if self.pretrained_model:
+            start = self.pretrained_model + 1
+        else:
+            start = 1
+
+        print_log(f'{"=" * 30} \nStart training from epoch {start}...')
+
+        for epoch in range(start, config['epochs']):
             start_time = time.time()
             train_loss = []
             self.model.train()
@@ -154,7 +162,7 @@ class Exp:
 
             train_loss = np.average(train_loss)
 
-            if epoch % args.log_step == 0:
+            if epoch == start or epoch % args.log_step == 0:
                 with torch.no_grad():
                     vali_loss = self.vali(self.vali_loader)
                 log_str= "Epoch: {0} | Train Loss: {1:.4f} Vali Loss: {2:.4f} | Take {3:.4f} seconds\n".format(
@@ -166,11 +174,11 @@ class Exp:
                 recorder(vali_loss, self.model, self.path)
 
             # Sample images
-            if epoch % args.sample_epoch == 0:
+            if epoch == start or epoch % args.sample_epoch == 0:
                 self.generate_samples(epoch + 1)
 
-            if epoch % args.save_epoch_freq == 0:
-                self._save(name=str(epoch + 1))
+            if epoch == start or epoch % args.save_epoch_freq == 0:
+                self._save(epoch=str(epoch))
 
         best_model_path = self.path + '/' + 'checkpoint.pth'
         self.model.load_state_dict(torch.load(best_model_path))
