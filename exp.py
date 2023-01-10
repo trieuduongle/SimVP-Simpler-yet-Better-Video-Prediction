@@ -134,8 +134,8 @@ class Exp:
         recorder = Recorder(verbose=True)
 
         # Start with trained model
-        if self.pretrained_model:
-            start = self.pretrained_model + 1
+        if self.args.pretrained_model:
+            start = self.args.pretrained_model + 1
         else:
             start = 1
 
