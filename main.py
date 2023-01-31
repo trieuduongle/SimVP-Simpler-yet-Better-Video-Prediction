@@ -18,7 +18,7 @@ def create_parser():
     parser.add_argument('--batch_size', default=16, type=int, help='Batch size')
     parser.add_argument('--val_batch_size', default=16, type=int, help='Batch size')
     parser.add_argument('--data_root', default='./data/')
-    parser.add_argument('--dataname', default='mmnist', choices=['mmnist', 'taxibj'])
+    parser.add_argument('--dataname', default='mmnist', choices=['mmnist', 'taxibj', 'kth'])
     parser.add_argument('--num_workers', default=8, type=int)
 
     # model parameters
