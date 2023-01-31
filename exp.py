@@ -25,7 +25,6 @@ class Exp:
         self._preparation()
         print_log(output_namespace(self.args))
 
-        self._get_data()
         self._select_optimizer()
         self._select_criterion()
 
