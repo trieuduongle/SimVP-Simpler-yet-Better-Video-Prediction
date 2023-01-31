@@ -112,7 +112,6 @@ class Exp:
             pred_y = self.model(batch_x)
             pred_y = pred_y[:, :self.args.aft_seq_length]
         elif self.args.aft_seq_length > self.args.pre_seq_length:
-            print('should here')
             pred_y = []
             d = self.args.aft_seq_length // self.args.pre_seq_length
             m = self.args.aft_seq_length % self.args.pre_seq_length
@@ -193,7 +192,7 @@ class Exp:
                 break
 
             batch_x, batch_y = batch_x.to(self.device), batch_y.to(self.device)
-            pred_y = self.model(batch_x)
+            pred_y = self._predict(batch_x)
             list(map(lambda data, lst: lst.append(data.detach().cpu().numpy()), [
                  pred_y, batch_y], [preds_lst, trues_lst]))
 
