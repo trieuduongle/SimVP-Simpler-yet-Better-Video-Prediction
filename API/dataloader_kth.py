@@ -27,7 +27,6 @@ from PIL import Image
 from torch.utils.data import Dataset
 import torch
 import hickle as hkl
-import h5py
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +41,7 @@ def get_binary_mask(x):
 class KTHDataset(Dataset):
     def __init__(self, datas, indices, pre_seq_length, aft_seq_length, require_back=False):
         super(KTHDataset,self).__init__()
-        self.datas = datas
+        self.datas = datas.swapaxes(2, 3).swapaxes(1,2)
         self.indices = indices
         self.pre_seq_length = pre_seq_length
         self.aft_seq_length = aft_seq_length
@@ -58,8 +57,8 @@ class KTHDataset(Dataset):
         begin = batch_ind
         end1 = begin + self.pre_seq_length
         end2 = begin + self.pre_seq_length + self.aft_seq_length
-        data = torch.tensor(np.array(self.datas[begin:end1,::]).swapaxes(2, 3).swapaxes(1,2)).float()
-        labels = torch.tensor(np.array(self.datas[end1:end2,::]).swapaxes(2, 3).swapaxes(1,2)).float()
+        data = torch.tensor(self.datas[begin:end1,::]).float()
+        labels = torch.tensor(self.datas[end1:end2,::]).float()
         if self.require_back:
             b_mask = get_binary_mask(data)
             H,W = b_mask.shape
@@ -267,7 +266,7 @@ class DataProcess(object):
       hkl.dump(train_indices, os.path.join(self.paths, 'train_indices_gzip.hkl'), mode='w', compression='gzip')
     else:
       print('train KTH dataset existed')
-      train_data = h5py.File(os.path.join(self.paths, 'train_data_gzip.hkl'))['data']
+      train_data = hkl.load(os.path.join(self.paths, 'train_data_gzip.hkl'))
       train_indices = hkl.load(os.path.join(self.paths, 'train_indices_gzip.hkl'))
     return InputHandle(train_data, train_indices, self.input_param)
 
@@ -278,7 +277,7 @@ class DataProcess(object):
       hkl.dump(test_indices, os.path.join(self.paths, 'test_indices_gzip.hkl'), mode='w', compression='gzip')
     else:
       print('test KTH dataset existed')
-      test_data = h5py.File(os.path.join(self.paths, 'test_data_gzip.hkl'))['data']
+      test_data = hkl.load(os.path.join(self.paths, 'test_data_gzip.hkl'))
       test_indices = hkl.load(os.path.join(self.paths, 'test_indices_gzip.hkl'))
     return InputHandle(test_data, test_indices, self.input_param)
 
